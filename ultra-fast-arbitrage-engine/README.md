@@ -102,6 +102,26 @@ Total tests: 10
 ✓ ALL TESTS PASSED - System integration verified!
 ```
 
+## Variable Verification
+
+Run comprehensive variable verification (80+ automated checks):
+
+```bash
+node verify-variables.js
+```
+
+This validates:
+- All module files exist
+- Build artifacts are present and valid
+- All functions are properly exported
+- All parameters are correctly typed
+- Test suite completeness
+- Rust NAPI bindings
+- Configuration integrity
+- Module loading and functionality
+
+For detailed documentation of all 200+ variables, see [MODULE_VERIFICATION.md](./MODULE_VERIFICATION.md).
+
 ## API Reference
 
 ### computeSlippage(reserveIn, reserveOut, amountIn)
