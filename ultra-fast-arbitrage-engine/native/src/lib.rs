@@ -5,20 +5,12 @@ mod math;
 use napi_derive::napi;
 
 #[napi]
-pub fn compute_uniswap_v2_slippage(
-    reserve_in: f64,
-    reserve_out: f64,
-    amount_in: f64,
-) -> f64 {
+pub fn compute_uniswap_v2_slippage(reserve_in: f64, reserve_out: f64, amount_in: f64) -> f64 {
     math::compute_uniswap_v2_slippage(reserve_in, reserve_out, amount_in)
 }
 
 #[napi]
-pub fn compute_uniswap_v3_slippage(
-    liquidity: f64,
-    sqrt_price: f64,
-    amount_in: f64,
-) -> f64 {
+pub fn compute_uniswap_v3_slippage(liquidity: f64, sqrt_price: f64, amount_in: f64) -> f64 {
     math::compute_uniswap_v3_slippage(liquidity, sqrt_price, amount_in)
 }
 
