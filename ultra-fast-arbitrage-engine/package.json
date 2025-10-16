@@ -1,0 +1,33 @@
+{
+  "name": "ultra-fast-arbitrage-engine",
+  "version": "1.0.0",
+  "description": "Ultra-fast arbitrage calculation engine with native Rust backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:rust": "cd native && cargo build --release && mkdir -p ../native && cp target/release/libmath_engine.so ../native/math_engine.node 2>/dev/null || cp target/release/libmath_engine.dylib ../native/math_engine.node 2>/dev/null || cp target/release/math_engine.dll ../native/math_engine.node 2>/dev/null || true",
+    "build:all": "yarn build:rust && yarn build",
+    "test": "node test.js"
+  },
+  "napi": {
+    "name": "math_engine",
+    "triples": {
+      "additional": []
+    }
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0",
+    "@types/node": "^24.8.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "arbitrage",
+    "defi",
+    "dex",
+    "slippage",
+    "rust",
+    "napi"
+  ],
+  "license": "MIT"
+}
