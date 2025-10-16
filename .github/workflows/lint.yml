@@ -1,0 +1,31 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  typescript-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'yarn'
+        cache-dependency-path: 'ultra-fast-arbitrage-engine/yarn.lock'
+    
+    - name: Install dependencies
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn install --frozen-lockfile
+    
+    - name: Run TypeScript compiler
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn build

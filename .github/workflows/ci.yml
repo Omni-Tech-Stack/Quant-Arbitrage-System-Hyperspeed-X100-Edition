@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+        cache-dependency-path: 'ultra-fast-arbitrage-engine/yarn.lock'
+    
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+    
+    - name: Install dependencies
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn install --frozen-lockfile
+    
+    - name: Build Rust native module
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn build:rust
+    
+    - name: Build TypeScript
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn build
+    
+    - name: Run tests
+      working-directory: ./ultra-fast-arbitrage-engine
+      run: yarn test
+    
+    - name: Upload artifacts
+      if: matrix.node-version == '20.x'
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          ultra-fast-arbitrage-engine/dist/
+          ultra-fast-arbitrage-engine/native/*.node
+        retention-days: 7

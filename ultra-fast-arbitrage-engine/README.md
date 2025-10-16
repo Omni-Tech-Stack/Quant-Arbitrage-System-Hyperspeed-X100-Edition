@@ -1,5 +1,9 @@
 # SYMEN-MAX Ultra-Fast Arbitrage Engine
 
+[![CI](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/ci.yml)
+[![Rust](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/rust.yml/badge.svg)](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/rust.yml)
+[![Lint](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/lint.yml/badge.svg)](https://github.com/Omni-Tech-Stack/Omni-Defi_Bot/actions/workflows/lint.yml)
+
 High-performance arbitrage calculation engine with native Rust backend and TypeScript interface.
 
 ## Features
