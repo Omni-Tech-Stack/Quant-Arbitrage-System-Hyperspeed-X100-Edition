@@ -1,0 +1,17 @@
+{
+  "name": "arbitrage-frontend",
+  "version": "1.0.0",
+  "description": "Frontend dashboard for Quant Arbitrage System",
+  "scripts": {
+    "start": "serve -s . -l 3000"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "keywords": [
+    "arbitrage",
+    "dashboard",
+    "frontend"
+  ],
+  "license": "MIT"
+}
