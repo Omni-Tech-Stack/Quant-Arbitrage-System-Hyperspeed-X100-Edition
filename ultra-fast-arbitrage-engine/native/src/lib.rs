@@ -4,6 +4,16 @@ mod math;
 
 use napi_derive::napi;
 
+/// Configuration parameters for arbitrage execution
+#[napi(object)]
+pub struct ArbitrageConfig {
+    pub gas_cost: f64,
+    pub flashloan_fee_pct: f64,
+    pub min_price_diff_pct: f64,
+    pub max_twap_deviation_pct: f64,
+    pub min_profit_threshold: f64,
+}
+
 #[napi]
 pub fn compute_uniswap_v2_slippage(reserve_in: f64, reserve_out: f64, amount_in: f64) -> f64 {
     math::compute_uniswap_v2_slippage(reserve_in, reserve_out, amount_in)
@@ -70,11 +80,7 @@ pub fn calculate_flashloan_amount(
 }
 
 #[napi]
-pub fn calculate_market_impact(
-    reserve_in: f64,
-    reserve_out: f64,
-    flashloan_amount: f64,
-) -> f64 {
+pub fn calculate_market_impact(reserve_in: f64, reserve_out: f64, flashloan_amount: f64) -> f64 {
     math::calculate_market_impact(reserve_in, reserve_out, flashloan_amount)
 }
 
@@ -90,7 +96,7 @@ pub fn calculate_multihop_slippage(reserves: Vec<Vec<f64>>, flashloan_amount: f6
             }
         })
         .collect();
-    
+
     math::calculate_multihop_slippage(&reserve_pairs, flashloan_amount)
 }
 
@@ -115,14 +121,14 @@ pub fn simulate_parallel_flashloan_paths(
                 .collect()
         })
         .collect();
-    
+
     let results = math::simulate_parallel_flashloan_paths(
         &path_tuples,
         &flashloan_amounts,
         flashloan_fee,
         &gas_costs,
     );
-    
+
     results
         .iter()
         .map(|(profit, slippage, idx)| vec![*profit, *slippage, *idx as f64])
@@ -168,7 +174,7 @@ pub fn identify_arbitrage_opportunity(
         pool2_reserve_out,
         min_price_diff_pct,
     );
-    
+
     vec![
         if has_opportunity { 1.0 } else { 0.0 },
         price_diff,
@@ -177,20 +183,12 @@ pub fn identify_arbitrage_opportunity(
 }
 
 #[napi]
-pub fn calculate_amount_in(
-    reserve_in: f64,
-    reserve_out: f64,
-    amount_out: f64,
-) -> f64 {
+pub fn calculate_amount_in(reserve_in: f64, reserve_out: f64, amount_out: f64) -> f64 {
     math::calculate_amount_in(reserve_in, reserve_out, amount_out)
 }
 
 #[napi]
-pub fn calculate_amount_out(
-    reserve_in: f64,
-    reserve_out: f64,
-    amount_in: f64,
-) -> f64 {
+pub fn calculate_amount_out(reserve_in: f64, reserve_out: f64, amount_in: f64) -> f64 {
     math::calculate_amount_out(reserve_in, reserve_out, amount_in)
 }
 
@@ -252,16 +250,12 @@ pub fn calculate_twap(price_samples: Vec<Vec<f64>>) -> f64 {
             }
         })
         .collect();
-    
+
     math::calculate_twap(&samples)
 }
 
 #[napi]
-pub fn validate_with_twap(
-    current_price: f64,
-    twap: f64,
-    max_deviation_pct: f64,
-) -> bool {
+pub fn validate_with_twap(current_price: f64, twap: f64, max_deviation_pct: f64) -> bool {
     math::validate_with_twap(current_price, twap, max_deviation_pct)
 }
 
@@ -273,22 +267,38 @@ pub fn execute_arbitrage_flow(
     pool2_reserve_out: f64,
     price_samples_pool1: Vec<Vec<f64>>,
     price_samples_pool2: Vec<Vec<f64>>,
-    gas_cost: f64,
-    flashloan_fee_pct: f64,
-    min_price_diff_pct: f64,
-    max_twap_deviation_pct: f64,
-    min_profit_threshold: f64,
+    config: ArbitrageConfig,
 ) -> Vec<f64> {
     let samples1: Vec<(f64, f64)> = price_samples_pool1
         .iter()
-        .filter_map(|s| if s.len() >= 2 { Some((s[0], s[1])) } else { None })
+        .filter_map(|s| {
+            if s.len() >= 2 {
+                Some((s[0], s[1]))
+            } else {
+                None
+            }
+        })
         .collect();
-    
+
     let samples2: Vec<(f64, f64)> = price_samples_pool2
         .iter()
-        .filter_map(|s| if s.len() >= 2 { Some((s[0], s[1])) } else { None })
+        .filter_map(|s| {
+            if s.len() >= 2 {
+                Some((s[0], s[1]))
+            } else {
+                None
+            }
+        })
         .collect();
-    
+
+    let math_config = math::ArbitrageConfig {
+        gas_cost: config.gas_cost,
+        flashloan_fee_pct: config.flashloan_fee_pct,
+        min_price_diff_pct: config.min_price_diff_pct,
+        max_twap_deviation_pct: config.max_twap_deviation_pct,
+        min_profit_threshold: config.min_profit_threshold,
+    };
+
     let (should_execute, optimal_amount, expected_profit) = math::execute_arbitrage_flow(
         pool1_reserve_in,
         pool1_reserve_out,
@@ -296,13 +306,9 @@ pub fn execute_arbitrage_flow(
         pool2_reserve_out,
         &samples1,
         &samples2,
-        gas_cost,
-        flashloan_fee_pct,
-        min_price_diff_pct,
-        max_twap_deviation_pct,
-        min_profit_threshold,
+        &math_config,
     );
-    
+
     vec![
         if should_execute { 1.0 } else { 0.0 },
         optimal_amount,
