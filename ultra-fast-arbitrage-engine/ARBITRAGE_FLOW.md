@@ -70,7 +70,7 @@ if (hasOpp === 1) {
 }
 ```
 
-**Rust Implementation**: `native/src/math.rs:428-463`
+**Rust Implementation**: `native/src/math.rs:377-405`
 
 ---
 
