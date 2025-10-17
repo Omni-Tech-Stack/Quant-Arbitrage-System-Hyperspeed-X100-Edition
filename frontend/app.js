@@ -151,6 +151,8 @@ function addOpportunity(opportunity) {
         <td class="profit-positive">$${opportunity.expectedProfit}</td>
         <td>${opportunity.slippage}%</td>
         <td class="${confidenceClass}">${opportunity.confidence}%</td>
+        ${opportunity.flashloanAmount ? `<td>$${parseFloat(opportunity.flashloanAmount).toFixed(0)}</td>` : '<td>-</td>'}
+        ${opportunity.marketImpact ? `<td>${parseFloat(opportunity.marketImpact).toFixed(4)}%</td>` : '<td>-</td>'}
     `;
     
     opportunitiesBody.insertBefore(row, opportunitiesBody.firstChild);
@@ -182,6 +184,8 @@ function addTrade(trade) {
         <td class="${profitClass}">$${trade.profit.toFixed(2)}</td>
         <td>${trade.actualSlippage.toFixed(4)}%</td>
         <td>${parseInt(trade.gasUsed).toLocaleString()}</td>
+        ${trade.flashloanAmount ? `<td>$${parseFloat(trade.flashloanAmount).toFixed(0)}</td>` : '<td>-</td>'}
+        ${trade.executionTime ? `<td>${trade.executionTime}</td>` : '<td>-</td>'}
     `;
     
     tradesBody.insertBefore(row, tradesBody.firstChild);
