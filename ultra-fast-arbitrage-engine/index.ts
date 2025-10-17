@@ -296,6 +296,17 @@ export function validateWithTWAP(
 }
 
 /**
+ * Configuration parameters for arbitrage execution
+ */
+export interface ArbitrageConfig {
+  gasCost: number;
+  flashloanFeePct: number;
+  minPriceDiffPct: number;
+  maxTwapDeviationPct: number;
+  minProfitThreshold: number;
+}
+
+/**
  * Step 7: Complete arbitrage execution flow
  * Returns [shouldExecute (0/1), optimalAmount, expectedProfit]
  * 
@@ -315,11 +326,7 @@ export function executeArbitrageFlow(
   pool2ReserveOut: number,
   priceSamplesPool1: number[][],
   priceSamplesPool2: number[][],
-  gasCost: number,
-  flashloanFeePct: number,
-  minPriceDiffPct: number,
-  maxTwapDeviationPct: number,
-  minProfitThreshold: number
+  config: ArbitrageConfig
 ): number[] {
   return native.executeArbitrageFlow(
     pool1ReserveIn,
@@ -328,11 +335,7 @@ export function executeArbitrageFlow(
     pool2ReserveOut,
     priceSamplesPool1,
     priceSamplesPool2,
-    gasCost,
-    flashloanFeePct,
-    minPriceDiffPct,
-    maxTwapDeviationPct,
-    minProfitThreshold
+    config
   );
 }
 

@@ -168,16 +168,20 @@ console.log(`  Valid: ${isValid2 ? '✅ YES' : '❌ NO'}\n`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 console.log('STEP 7: EXECUTE THE TRADE (Complete Flow)\n');
 
+const config = {
+  gasCost: gasCost,
+  flashloanFeePct: flashloanFee,
+  minPriceDiffPct: 5.0,
+  maxTwapDeviationPct: 10.0,
+  minProfitThreshold: 50.0
+};
+
 const [shouldExecute, finalAmount, finalProfit] = executeArbitrageFlow(
   pool1.reserveIn, pool1.reserveOut,
   pool2.reserveIn, pool2.reserveOut,
   history1,
   history2,
-  gasCost,
-  flashloanFee,
-  5.0,   // Min price diff %
-  10.0,  // Max TWAP deviation %
-  50.0   // Min profit threshold
+  config
 );
 
 console.log('EXECUTION DECISION:');

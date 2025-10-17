@@ -259,11 +259,13 @@ test('Step 7: Complete arbitrage flow for profitable scenario', () => {
     1000000, 2500000,   // Pool 2: price ~2.5
     priceSamples1,
     priceSamples2,
-    100,                // Gas cost
-    0.0009,             // Flashloan fee
-    10.0,               // Min price diff % (20% difference exists)
-    10.0,               // Max TWAP deviation %
-    50.0                // Min profit threshold
+    {
+      gasCost: 100,
+      flashloanFeePct: 0.0009,
+      minPriceDiffPct: 10.0,
+      maxTwapDeviationPct: 10.0,
+      minProfitThreshold: 50.0
+    }
   );
   
   const [shouldExecute, optimalAmount, expectedProfit] = result;
@@ -289,11 +291,13 @@ test('Step 7: Complete flow rejects unprofitable arbitrage', () => {
     1000000, 2000000,   // Pool 2 (same price)
     priceSamples,
     priceSamples,
-    100,
-    0.0009,
-    5.0,
-    10.0,
-    50.0
+    {
+      gasCost: 100,
+      flashloanFeePct: 0.0009,
+      minPriceDiffPct: 5.0,
+      maxTwapDeviationPct: 10.0,
+      minProfitThreshold: 50.0
+    }
   );
   
   const [shouldExecute] = result;
@@ -319,11 +323,13 @@ test('Step 7: Complete flow rejects when TWAP validation fails', () => {
     1000000, 2500000,   // Pool 2: price ~2.5
     priceSamples1,
     priceSamples2,
-    100,
-    0.0009,
-    10.0,
-    5.0,                // Max TWAP deviation 5% (but deviation is ~25%)
-    50.0
+    {
+      gasCost: 100,
+      flashloanFeePct: 0.0009,
+      minPriceDiffPct: 10.0,
+      maxTwapDeviationPct: 5.0,
+      minProfitThreshold: 50.0
+    }
   );
   
   const [shouldExecute] = result;
@@ -386,7 +392,13 @@ test('Integration: Complete arbitrage workflow demonstration', () => {
     pool1.reserveIn, pool1.reserveOut,
     pool2.reserveIn, pool2.reserveOut,
     history1, history2,
-    100, 0.0009, 5.0, 10.0, 50.0
+    {
+      gasCost: 100,
+      flashloanFeePct: 0.0009,
+      minPriceDiffPct: 5.0,
+      maxTwapDeviationPct: 10.0,
+      minProfitThreshold: 50.0
+    }
   );
   console.log(`  Step 7: Execute → ${shouldExecute ? 'YES' : 'NO'}, Amount: ${finalAmount.toFixed(2)}, Profit: ${finalProfit.toFixed(2)}`);
   console.log('  =====================================\n');
