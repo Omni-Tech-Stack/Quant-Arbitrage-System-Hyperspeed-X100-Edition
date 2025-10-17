@@ -9,6 +9,8 @@
     "build:rust": "cd native && cargo build --release && mkdir -p ../native && cp target/release/libmath_engine.so ../native/math_engine.node 2>/dev/null || cp target/release/libmath_engine.dylib ../native/math_engine.node 2>/dev/null || cp target/release/math_engine.dll ../native/math_engine.node 2>/dev/null || true",
     "build:all": "yarn build:rust && yarn build",
     "test": "node test.js",
+    "test:verbose": "node test-verbose.js",
+    "test:all": "yarn test && echo '\n\nFor detailed calculations, run: yarn test:verbose'",
     "setup": "node setup.js"
   },
   "napi": {
