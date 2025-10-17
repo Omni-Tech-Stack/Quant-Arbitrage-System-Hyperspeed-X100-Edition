@@ -6,6 +6,19 @@
 
 High-performance arbitrage calculation engine with native Rust backend and TypeScript interface.
 
+## 📊 Test Validation & Transparency
+
+**All calculations, formulas, and data sources are fully documented and verifiable:**
+
+- **[TEST_VALIDATION_SUMMARY.md](./TEST_VALIDATION_SUMMARY.md)** - Quick overview and navigation
+- **[MATH_FORMULAS.md](./MATH_FORMULAS.md)** - All formulas with whitepaper sources
+- **[TEST_DATA_SOURCES.md](./TEST_DATA_SOURCES.md)** - Test data justification and sources
+- **[VALIDATION_GUIDE.md](./VALIDATION_GUIDE.md)** - How to validate everything yourself
+
+Run `yarn test:verbose` to see step-by-step calculations with sources.
+
+---
+
 ## Features
 
 - **Zero-Copy NAPI Bindings**: Direct memory access between Rust and Node.js
