@@ -285,6 +285,47 @@ if __name__ == "__main__":
 
 ## 🏁 How to Run All Tests and Checks
 
+### Backend API Tests (NEW - Comprehensive Testing)
+
+**Quick Start:**
+```bash
+cd backend
+npm install
+npm test
+```
+
+This runs:
+- ✅ 15 unit tests covering all API endpoints
+- ✅ 7 feature/scenario tests with real market data
+- ✅ Automatic result generation (JSON + Markdown)
+- ✅ 100% API coverage validation
+
+**Individual Test Suites:**
+```bash
+npm run test:unit      # Unit tests only
+npm run test:feature   # Feature scenarios only
+```
+
+**What Gets Tested:**
+- Health checks & statistics
+- Opportunity detection & posting
+- Trade execution & recording
+- Flashloan calculations
+- Market impact analysis
+- Multi-path simulations
+- High-frequency scenarios
+- MEV bundle workflows
+
+**Test Results:**
+Results are saved to `backend/test-results/`:
+- `TEST-REPORT.md` - Human-readable summary
+- `comprehensive-report.json` - Detailed JSON data
+- Individual test result files
+
+See [TESTING.md](./TESTING.md) for comprehensive documentation.
+
+### Python Module Tests
+
 ```bash
 # 1. Pool fetcher and registry integrity
 yarn run dex_pool_fetcher.js
