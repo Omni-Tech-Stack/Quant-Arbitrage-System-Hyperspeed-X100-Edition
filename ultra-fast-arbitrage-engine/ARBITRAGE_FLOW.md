@@ -35,7 +35,7 @@ const price = calculatePoolPrice(1000000, 2000000);
 // Result: 2.0 (price of tokenIn in terms of tokenOut)
 ```
 
-**Rust Implementation**: `native/src/math.rs:420-426`
+**Rust Implementation**: `native/src/math.rs:365-372`
 
 ---
 
