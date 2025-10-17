@@ -2,6 +2,23 @@
 
 ---
 
+## 🎯 One-Click Deployment
+
+Deploy the entire system (Frontend + Backend + Dashboard) with a single command:
+
+```bash
+./deploy.sh
+```
+
+**Access your system:**
+- 📊 **Dashboard**: http://localhost:3000
+- 🔌 **Backend API**: http://localhost:3001
+- 📋 **API Health**: http://localhost:3001/api/health
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
 ## Executive Overview
 
 The **Quant Arbitrage System: Hyperspeed X100 Edition** is a fully modular, cross-chain, high-frequency arbitrage framework for advanced DeFi trading. Engineered for maximal throughput, real-time adaptability, and extensibility, it seamlessly integrates dynamic pool discovery, parallel TVL analytics, MEV defense, adaptive ML, and transparent batch rewards. Its hybrid Python + Node.js orchestration delivers lightning-fast execution and flexibility for new protocols, strategies, and analytics models. Whether you're building a global MEV operation, a quant desk, or a decentralized trading DAO, this stack delivers sustainable alpha, operational resilience, and rapid innovation in DeFi.
@@ -140,6 +157,29 @@ The **Quant Arbitrage System: Hyperspeed X100 Edition** is a fully modular, cros
 ```plaintext
 /
 ├── README.md
+├── DEPLOYMENT.md                            # Deployment guide and documentation
+├── deploy.sh                                # One-click deployment script
+├── docker-compose.yml                       # Docker Compose configuration
+├── backend/                                 # Backend API server
+│   ├── server.js                           # Express API with WebSocket support
+│   ├── package.json
+│   ├── Dockerfile
+│   └── .gitignore
+├── frontend/                                # Frontend dashboard
+│   ├── index.html                          # Dashboard UI
+│   ├── app.js                              # Real-time data handling
+│   ├── styles.css                          # Dashboard styling
+│   ├── package.json
+│   ├── Dockerfile
+│   └── .gitignore
+├── ultra-fast-arbitrage-engine/             # Ultra-fast arbitrage engine
+│   ├── index.ts                            # TypeScript interface
+│   ├── native/                             # Rust native module
+│   ├── package.json
+│   ├── Dockerfile
+│   └── README.md
+├── testing/
+│   └── master_runner.js                    # Test orchestration
 ├── main_quant_hybrid_orchestrator.py       # Hybrid orchestrator (PY + JS, top-level automation)
 ├── orchestrator_tvl_hyperspeed.py          # Parallel TVL orchestrator (PY)
 ├── dex_pool_fetcher.js                     # JS pool fetcher (30+ DEX, 6+ chains)
