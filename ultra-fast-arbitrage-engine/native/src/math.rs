@@ -507,6 +507,9 @@ pub fn optimize_trade_size_quadratic(
     flashloan_fee_pct: f64,
 ) -> f64 {
     // Use binary search to find optimal size (more robust than pure quadratic)
+    // Limit trade size to 30% of reserves to avoid excessive slippage and market impact.
+    // 30% is a common DeFi heuristic, balancing profit potential with risk of moving the market,
+    // and is consistent with the approach in `calculate_flashloan_amount_v3`.
     let max_amount = (buy_reserve_in * 0.3).min(sell_reserve_in * 0.3);
     let mut best_size = 0.0;
     let mut best_profit = 0.0;
