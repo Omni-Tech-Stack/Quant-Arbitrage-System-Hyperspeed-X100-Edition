@@ -5,3 +5,25 @@ target/
 .yarn/
 yarn-error.log
 .DS_Store
+
+# Environment files (but keep examples)
+.env
+.env.local
+.env.*.local
+.env.backup
+!.env.example
+
+# Sensitive data files (keep templates only)
+pool_registry.json
+token_equivalence.json
+MultiDEXArbitrageCore.abi.json
+!*.example
+
+# ML Models
+models/*.pkl
+models/*.h5
+models/*.pt
+
+# Logs
+logs/
+*.log
