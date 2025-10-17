@@ -49,10 +49,10 @@ jobs:
       
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: test-results-node-${{ matrix.node-version }}
-          path: backend/test-results/
+          name: unit-test-results-1760680760093.json
+          path: backend/test-results/unit-test-results-1760680760093.json
           retention-days: 30
       
       - name: Upload test report
