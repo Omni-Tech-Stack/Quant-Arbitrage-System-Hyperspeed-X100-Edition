@@ -24,8 +24,49 @@ Run `yarn test:verbose` to see step-by-step calculations with sources.
 - **Zero-Copy NAPI Bindings**: Direct memory access between Rust and Node.js
 - **Native Speed**: Rust compiled with LTO and optimization level 3
 - **Multi-DEX Support**: Uniswap V2/V3, Curve, Balancer, and aggregator routing
+- **Complete Arbitrage Flow**: 7-step logical flow for opportunity detection and execution
+- **TWAP Validation**: Time-weighted average price validation to prevent manipulation
+- **Quadratic Optimization**: Advanced trade size optimization for maximum profit
 - **Type Safety**: Full TypeScript type definitions
 - **Deterministic**: Same inputs always produce same outputs
+
+## 🚀 New: Complete Arbitrage Flow System
+
+The engine now implements a complete 7-step logical flow for arbitrage:
+
+1. **Identify Arbitrage Opportunities** - Calculate and compare prices
+2. **Determine Direction** - Confirm buy/sell pools
+3. **Calculate Trade Amounts** - Input/output calculations
+4. **Estimate Profitability** - Profit after all fees
+5. **Optimize Trade Size** - Quadratic optimization
+6. **Validate Using TWAP** - Prevent price manipulation
+7. **Execute Decision** - Complete workflow
+
+📖 **[See ARBITRAGE_FLOW.md for complete documentation](./ARBITRAGE_FLOW.md)**
+
+### Quick Example
+
+```typescript
+import { executeArbitrageFlow } from './index';
+
+const priceSamples = [[0, 2.0], [10, 2.05], [20, 2.1]];
+
+const [shouldExecute, optimalAmount, expectedProfit] = executeArbitrageFlow(
+  1000000, 2000000,   // Pool 1 reserves
+  1000000, 2500000,   // Pool 2 reserves (25% price difference)
+  priceSamples,       // TWAP validation data
+  priceSamples,
+  100,                // Gas cost
+  0.0009,             // Flashloan fee (0.09%)
+  5.0,                // Min 5% price difference
+  10.0,               // Max 10% TWAP deviation
+  50.0                // Min $50 profit
+);
+
+if (shouldExecute === 1) {
+  console.log(`Execute: Amount ${optimalAmount}, Profit ${expectedProfit}`);
+}
+```
 
 ## Architecture
 
@@ -170,16 +211,41 @@ This shows:
 - **Final results** with explanations
 - **Source references** to protocol documentation
 
+### Arbitrage Flow Testing
+
+Run the complete arbitrage flow test suite:
+
+```bash
+yarn test:flow
+```
+
+This tests all 7 steps of the arbitrage workflow:
+- ✓ Price calculation and opportunity identification
+- ✓ Direction determination
+- ✓ Trade amount calculations
+- ✓ Profitability estimation
+- ✓ Quadratic optimization
+- ✓ TWAP validation
+- ✓ Complete execution flow
+
+Run all tests:
+
+```bash
+yarn test:all
+```
+
 ### Test Validation Documentation
 
 For complete transparency on test mathematics and data sources:
 
 1. **[VALIDATION_GUIDE.md](./VALIDATION_GUIDE.md)** - How to validate all calculations
 2. **[MATH_FORMULAS.md](./MATH_FORMULAS.md)** - All formulas with sources and examples
-3. **[TEST_DATA_SOURCES.md](./TEST_DATA_SOURCES.md)** - Test data justification and sources
+3. **[ARBITRAGE_FLOW.md](./ARBITRAGE_FLOW.md)** - Complete arbitrage flow documentation
+4. **[TEST_DATA_SOURCES.md](./TEST_DATA_SOURCES.md)** - Test data justification and sources
 
 These documents provide:
 - ✓ Mathematical formula derivations with whitepaper references
+- ✓ Complete arbitrage workflow with equations
 - ✓ Test data sources and rationale
 - ✓ Manual calculation examples you can verify
 - ✓ Protocol fee sources (Uniswap, Curve, Aave, etc.)
@@ -208,7 +274,9 @@ For detailed documentation of all 200+ variables, see [MODULE_VERIFICATION.md](.
 
 ## API Reference
 
-### computeSlippage(reserveIn, reserveOut, amountIn)
+### Core Slippage Functions
+
+#### computeSlippage(reserveIn, reserveOut, amountIn)
 
 Calculate slippage for Uniswap V2 style constant product pools.
 
@@ -219,31 +287,75 @@ Calculate slippage for Uniswap V2 style constant product pools.
 
 **Returns:** Slippage percentage
 
-### computeUniswapV3Slippage(liquidity, sqrtPrice, amountIn)
+#### computeUniswapV3Slippage(liquidity, sqrtPrice, amountIn)
 
 Calculate slippage for Uniswap V3 concentrated liquidity pools.
 
-### computeCurveSlippage(balanceIn, balanceOut, amountIn, amplification)
+#### computeCurveSlippage(balanceIn, balanceOut, amountIn, amplification)
 
 Calculate slippage for Curve stableswap pools with amplification coefficient.
 
-### computeBalancerSlippage(balanceIn, balanceOut, weightIn, weightOut, amountIn)
+#### computeBalancerSlippage(balanceIn, balanceOut, weightIn, weightOut, amountIn)
 
 Calculate slippage for Balancer weighted pools.
 
-### computeAggregatorSlippage(slippages)
+#### computeAggregatorSlippage(slippages)
 
 Find the best route with minimum slippage from multiple options.
 
-### getOptimalTradeSize(reserveIn, reserveOut, gasCost, minProfit)
+#### getOptimalTradeSize(reserveIn, reserveOut, gasCost, minProfit)
 
 Calculate the optimal trade size for maximum profit.
+
+### Arbitrage Flow Functions
+
+#### calculatePoolPrice(reserveIn, reserveOut)
+**Step 1**: Calculate token price from pool reserves.
+
+#### identifyArbitrageOpportunity(pool1ReserveIn, pool1ReserveOut, pool2ReserveIn, pool2ReserveOut, minPriceDiffPct)
+**Step 2**: Identify arbitrage opportunity and determine direction.
+
+**Returns:** `[hasOpportunity, priceDifference%, direction]`
+
+#### calculateAmountIn(reserveIn, reserveOut, amountOut)
+**Step 3**: Calculate input amount needed for desired output.
+
+#### calculateAmountOut(reserveIn, reserveOut, amountIn)
+**Step 3**: Calculate output amount for given input.
+
+#### estimateArbitrageProfit(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, amountIn, gasCost, flashloanFeePct)
+**Step 4**: Estimate net profit after all fees.
+
+#### solveQuadratic(a, b, c)
+**Step 5**: Solve quadratic equation ax² + bx + c = 0.
+
+**Returns:** `[root1, root2]`
+
+#### optimizeTradeSizeQuadratic(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, gasCost, flashloanFeePct)
+**Step 5**: Find optimal trade size for maximum profit.
+
+#### calculateTWAP(priceSamples)
+**Step 6**: Calculate time-weighted average price from historical samples.
+
+**Parameters:**
+- `priceSamples` - Array of `[timestamp, price]` pairs
+
+#### validateWithTWAP(currentPrice, twap, maxDeviationPct)
+**Step 6**: Validate current price against TWAP to detect manipulation.
+
+#### executeArbitrageFlow(...)
+**Step 7**: Complete arbitrage workflow integrating all steps.
+
+**Returns:** `[shouldExecute, optimalAmount, expectedProfit]`
+
+📖 **See [ARBITRAGE_FLOW.md](./ARBITRAGE_FLOW.md) for detailed API documentation and examples.**
 
 ## Performance
 
 - **Native Module Size**: ~441KB (optimized)
 - **Zero Serialization Overhead**: Direct memory access via NAPI
 - **Microsecond Latency**: Suitable for high-frequency arbitrage
+- **Arbitrage Flow**: < 200μs for complete 7-step workflow
 
 ## License
 

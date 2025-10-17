@@ -145,3 +145,167 @@ pub fn calculate_flashloan_amount_v3(
         gas_cost,
     )
 }
+
+// New arbitrage flow functions
+
+#[napi]
+pub fn calculate_pool_price(reserve_in: f64, reserve_out: f64) -> f64 {
+    math::calculate_pool_price(reserve_in, reserve_out)
+}
+
+#[napi]
+pub fn identify_arbitrage_opportunity(
+    pool1_reserve_in: f64,
+    pool1_reserve_out: f64,
+    pool2_reserve_in: f64,
+    pool2_reserve_out: f64,
+    min_price_diff_pct: f64,
+) -> Vec<f64> {
+    let (has_opportunity, price_diff, direction) = math::identify_arbitrage_opportunity(
+        pool1_reserve_in,
+        pool1_reserve_out,
+        pool2_reserve_in,
+        pool2_reserve_out,
+        min_price_diff_pct,
+    );
+    
+    vec![
+        if has_opportunity { 1.0 } else { 0.0 },
+        price_diff,
+        direction as f64,
+    ]
+}
+
+#[napi]
+pub fn calculate_amount_in(
+    reserve_in: f64,
+    reserve_out: f64,
+    amount_out: f64,
+) -> f64 {
+    math::calculate_amount_in(reserve_in, reserve_out, amount_out)
+}
+
+#[napi]
+pub fn calculate_amount_out(
+    reserve_in: f64,
+    reserve_out: f64,
+    amount_in: f64,
+) -> f64 {
+    math::calculate_amount_out(reserve_in, reserve_out, amount_in)
+}
+
+#[napi]
+pub fn estimate_arbitrage_profit(
+    buy_reserve_in: f64,
+    buy_reserve_out: f64,
+    sell_reserve_in: f64,
+    sell_reserve_out: f64,
+    amount_in: f64,
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+) -> f64 {
+    math::estimate_arbitrage_profit(
+        buy_reserve_in,
+        buy_reserve_out,
+        sell_reserve_in,
+        sell_reserve_out,
+        amount_in,
+        gas_cost,
+        flashloan_fee_pct,
+    )
+}
+
+#[napi]
+pub fn solve_quadratic(a: f64, b: f64, c: f64) -> Vec<f64> {
+    let (root1, root2) = math::solve_quadratic(a, b, c);
+    vec![root1, root2]
+}
+
+#[napi]
+pub fn optimize_trade_size_quadratic(
+    buy_reserve_in: f64,
+    buy_reserve_out: f64,
+    sell_reserve_in: f64,
+    sell_reserve_out: f64,
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+) -> f64 {
+    math::optimize_trade_size_quadratic(
+        buy_reserve_in,
+        buy_reserve_out,
+        sell_reserve_in,
+        sell_reserve_out,
+        gas_cost,
+        flashloan_fee_pct,
+    )
+}
+
+#[napi]
+pub fn calculate_twap(price_samples: Vec<Vec<f64>>) -> f64 {
+    let samples: Vec<(f64, f64)> = price_samples
+        .iter()
+        .filter_map(|s| {
+            if s.len() >= 2 {
+                Some((s[0], s[1]))
+            } else {
+                None
+            }
+        })
+        .collect();
+    
+    math::calculate_twap(&samples)
+}
+
+#[napi]
+pub fn validate_with_twap(
+    current_price: f64,
+    twap: f64,
+    max_deviation_pct: f64,
+) -> bool {
+    math::validate_with_twap(current_price, twap, max_deviation_pct)
+}
+
+#[napi]
+pub fn execute_arbitrage_flow(
+    pool1_reserve_in: f64,
+    pool1_reserve_out: f64,
+    pool2_reserve_in: f64,
+    pool2_reserve_out: f64,
+    price_samples_pool1: Vec<Vec<f64>>,
+    price_samples_pool2: Vec<Vec<f64>>,
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+    min_price_diff_pct: f64,
+    max_twap_deviation_pct: f64,
+    min_profit_threshold: f64,
+) -> Vec<f64> {
+    let samples1: Vec<(f64, f64)> = price_samples_pool1
+        .iter()
+        .filter_map(|s| if s.len() >= 2 { Some((s[0], s[1])) } else { None })
+        .collect();
+    
+    let samples2: Vec<(f64, f64)> = price_samples_pool2
+        .iter()
+        .filter_map(|s| if s.len() >= 2 { Some((s[0], s[1])) } else { None })
+        .collect();
+    
+    let (should_execute, optimal_amount, expected_profit) = math::execute_arbitrage_flow(
+        pool1_reserve_in,
+        pool1_reserve_out,
+        pool2_reserve_in,
+        pool2_reserve_out,
+        &samples1,
+        &samples2,
+        gas_cost,
+        flashloan_fee_pct,
+        min_price_diff_pct,
+        max_twap_deviation_pct,
+        min_profit_threshold,
+    );
+    
+    vec![
+        if should_execute { 1.0 } else { 0.0 },
+        optimal_amount,
+        expected_profit,
+    ]
+}
