@@ -68,6 +68,16 @@ if (shouldExecute === 1) {
 }
 ```
 
+### Interactive Demonstration
+
+Run the interactive demonstration to see the complete workflow in action:
+
+```bash
+npm run demo
+```
+
+This visualizes all 7 steps with real calculations and execution decision.
+
 ## Architecture
 
 ```
