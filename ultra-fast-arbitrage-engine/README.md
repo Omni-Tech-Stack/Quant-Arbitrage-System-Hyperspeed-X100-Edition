@@ -111,6 +111,8 @@ yarn run build
 
 ## Testing
 
+### Quick Test (Standard Output)
+
 Run the complete integration test suite:
 
 ```bash
@@ -130,14 +132,46 @@ Expected output:
 ✓ Large trade shows higher slippage than small trade
 ✓ Functions handle zero trade size
 ✓ Full arbitrage workflow integration
+...and 10 more tests
 
 === TEST SUMMARY ===
-Tests passed: 10
+Tests passed: 20
 Tests failed: 0
-Total tests: 10
+Total tests: 20
 
 ✓ ALL TESTS PASSED - System integration verified!
 ```
+
+### Verbose Test (Detailed Calculations)
+
+Run tests with detailed mathematical calculations and data sources:
+
+```bash
+yarn test:verbose
+```
+
+This shows:
+- **Input parameters** with context and sources
+- **Step-by-step calculations** for each formula
+- **Intermediate values** in each computation
+- **Final results** with explanations
+- **Source references** to protocol documentation
+
+### Test Validation Documentation
+
+For complete transparency on test mathematics and data sources:
+
+1. **[VALIDATION_GUIDE.md](./VALIDATION_GUIDE.md)** - How to validate all calculations
+2. **[MATH_FORMULAS.md](./MATH_FORMULAS.md)** - All formulas with sources and examples
+3. **[TEST_DATA_SOURCES.md](./TEST_DATA_SOURCES.md)** - Test data justification and sources
+
+These documents provide:
+- ✓ Mathematical formula derivations with whitepaper references
+- ✓ Test data sources and rationale
+- ✓ Manual calculation examples you can verify
+- ✓ Protocol fee sources (Uniswap, Curve, Aave, etc.)
+- ✓ Links to on-chain analytics and contract code
+- ✓ Step-by-step validation instructions
 
 ## Variable Verification
 
