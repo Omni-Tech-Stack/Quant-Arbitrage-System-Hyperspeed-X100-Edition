@@ -357,15 +357,29 @@ class WalletManager {
       }
 
       const encrypted = await walletData.wallet.encrypt(password);
-      const filename = `wallet-${address.toLowerCase()}.json`;
-      const filepath = path.join(this.walletsDir, filename);
+      
+      // Security: Validate address format and sanitize for filename
+      const addressLower = address.toLowerCase();
+      if (!ethers.isAddress(address)) {
+        return { success: false, error: 'Invalid address format' };
+      }
+      
+      // Generate safe filename using only the validated address (no path separators)
+      const safeFilename = `wallet-${addressLower.replace(/[^a-z0-9]/g, '')}.json`;
+      const walletsDir = path.resolve(this.walletsDir);
+      const filepath = path.join(walletsDir, safeFilename);
+      
+      // Ensure the wallets directory exists
+      if (!fs.existsSync(walletsDir)) {
+        fs.mkdirSync(walletsDir, { recursive: true });
+      }
       
       fs.writeFileSync(filepath, encrypted);
 
       return {
         success: true,
         filepath: filepath,
-        filename: filename
+        filename: safeFilename
       };
     } catch (error) {
       return {
@@ -380,7 +394,28 @@ class WalletManager {
    */
   async loadWalletFromFile(filepath, password, label = 'loaded') {
     try {
-      const encrypted = fs.readFileSync(filepath, 'utf8');
+      // Security: Validate filepath to prevent path traversal
+      const normalizedPath = path.normalize(filepath);
+      const walletsDir = path.resolve(this.walletsDir);
+      const resolvedPath = path.resolve(normalizedPath);
+      
+      // Ensure the file is within the wallets directory
+      if (!resolvedPath.startsWith(walletsDir)) {
+        return {
+          success: false,
+          error: 'Invalid file path: must be within wallets directory'
+        };
+      }
+      
+      // Check if file exists
+      if (!fs.existsSync(resolvedPath)) {
+        return {
+          success: false,
+          error: 'Wallet file not found'
+        };
+      }
+      
+      const encrypted = fs.readFileSync(resolvedPath, 'utf8');
       const wallet = await ethers.Wallet.fromEncryptedJson(encrypted, password);
       
       const walletData = {

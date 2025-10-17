@@ -27,6 +27,30 @@ The **Quant Arbitrage System: Hyperspeed X100 Edition** is a fully modular, cros
 
 ## 🌟 Key Features (Merged & Expanded)
 
+### 0. **NEW: Comprehensive Web3 & Wallet Integration** 🔥
+
+- **wallet-manager.js**: Full-featured wallet management with internal/external wallet support
+  - Create new wallets with mnemonic phrases
+  - Import from private key or mnemonic
+  - Connect external wallets (read-only)
+  - Sign messages and transactions
+  - Encrypted wallet storage
+  - Balance checking for native and ERC20 tokens
+- **blockchain-connector.js**: Multi-chain blockchain connectivity (ethers.js + web3.js)
+  - Support for Ethereum, Polygon, BSC, and any EVM chain
+  - Transaction management and monitoring
+  - Contract interaction and code inspection
+  - Gas estimation and price monitoring
+  - Token information retrieval
+- **web3-utilities.js**: Comprehensive Web3 utility functions
+  - Function encoding/decoding
+  - Event log parsing
+  - ABI encoding/decoding
+  - Address validation and checksumming
+  - Keccak256 hashing and more
+- **Why?** Enables seamless blockchain integration for wallet operations, transaction signing, contract interactions, and multi-chain support - all through a unified REST API.
+- **Documentation**: See [WEB3_INTEGRATION.md](./WEB3_INTEGRATION.md) and [QUICKSTART_WEB3.md](./QUICKSTART_WEB3.md)
+
 ### 1. Dynamic Cross-Chain Pool Discovery & Registry Management
 
 - **dex_pool_fetcher.js**: Aggregates liquidity pool data from 30+ DEXes (Uniswap, SushiSwap, Balancer, Curve, PancakeSwap, QuickSwap, Trader Joe, etc.) across all major EVM-compatible blockchains. Features auto-updates, error handling, and incremental sync.

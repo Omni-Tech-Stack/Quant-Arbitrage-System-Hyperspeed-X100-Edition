@@ -341,6 +341,15 @@ app.post('/api/wallet/save', async (req, res) => {
 app.post('/api/wallet/load', async (req, res) => {
   try {
     const { filepath, password, label } = req.body;
+    
+    // Security: Validate input types to prevent type confusion
+    if (typeof filepath !== 'string') {
+      return res.status(400).json({ success: false, error: 'filepath must be a string' });
+    }
+    if (typeof password !== 'string') {
+      return res.status(400).json({ success: false, error: 'password must be a string' });
+    }
+    
     const result = await walletManager.loadWalletFromFile(filepath, password, label);
     res.json(result);
   } catch (error) {
