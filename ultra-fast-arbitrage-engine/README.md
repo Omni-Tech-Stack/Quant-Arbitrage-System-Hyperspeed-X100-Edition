@@ -54,6 +54,43 @@ cd ultra-fast-arbitrage-engine
 yarn install
 ```
 
+## Setup
+
+### Interactive Setup (Recommended)
+
+Run the interactive setup script to configure all variables:
+
+```bash
+yarn setup
+# or
+node setup.js
+```
+
+This will guide you through configuring:
+- RPC Endpoint
+- Pool Registry Path
+- Token Equivalence Path
+- Arbitrage Contract ABI
+- Private Key (securely)
+- MEV Relays (Bloxroute, Flashbots, Eden)
+- ML Model configuration
+- Monitoring & Alerts (Slack, Email, Telegram)
+- Log Directory
+- Automation settings
+- Execution parameters
+- Risk management
+- Database connection
+
+The script will:
+1. Prompt for each configuration item
+2. Create necessary directories and files
+3. Update or create the `.env` file
+4. Validate the configuration
+
+### Manual Setup
+
+Alternatively, copy `.env.example` (if exists) or manually create `.env` with required variables.
+
 ## Building
 
 Build both Rust native module and TypeScript interface:

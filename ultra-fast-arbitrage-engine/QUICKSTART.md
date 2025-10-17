@@ -13,6 +13,35 @@ cd ultra-fast-arbitrage-engine
 yarn install
 ```
 
+## Initial Setup
+
+### Interactive Setup (Recommended)
+
+Run the interactive setup wizard to configure all variables:
+
+```bash
+yarn setup
+```
+
+This interactive script will:
+1. Walk you through all configuration options
+2. Create necessary directories and files
+3. Generate or update your `.env` file
+4. Validate your configuration
+
+Configuration includes:
+- Network RPC endpoints
+- Wallet/private key setup
+- MEV relay configuration (Flashbots, Bloxroute, Eden)
+- Pool registry and token equivalence files
+- Machine learning model paths
+- Monitoring and alerting (Telegram, Slack, Email)
+- Database and Redis settings
+- Execution parameters and risk management
+- Logging configuration
+
+**Security Note:** The setup script handles sensitive data like private keys carefully and reminds you never to commit them to version control.
+
 ## Building
 
 ### Build Everything (Recommended)
