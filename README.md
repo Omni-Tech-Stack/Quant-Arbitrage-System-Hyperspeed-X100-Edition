@@ -10,6 +10,14 @@ Deploy the entire system (Frontend + Backend + Dashboard) with a single command:
 ./deploy.sh
 ```
 
+**System runs in ALL LIVE mode by default:**
+- Real market data from blockchain RPCs
+- Real volume and liquidity metrics
+- Real slippage impact calculations
+- Real digital gas fees
+
+To enable demo mode for testing, set `DEMO_MODE=true` in docker-compose.yml
+
 **Access your system:**
 - 📊 **Dashboard**: http://localhost:3000
 - 🔌 **Backend API**: http://localhost:3001

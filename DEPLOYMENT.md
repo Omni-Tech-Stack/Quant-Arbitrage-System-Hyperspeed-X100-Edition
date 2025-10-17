@@ -39,7 +39,7 @@ docker compose version
 ### 1. Backend API Server (Port 3001)
 - RESTful API for arbitrage data
 - WebSocket server for real-time updates
-- Demo mode with simulated trading data
+- **ALL LIVE mode by default** - real market data, volumes, slippage, and gas fees
 - Health check endpoint
 
 ### 2. Frontend Dashboard (Port 3000)
@@ -114,7 +114,7 @@ docker compose up -d --build
 
 **Backend** (`backend/Dockerfile` or `docker-compose.yml`):
 - `PORT` - Backend API port (default: 3001)
-- `DEMO_MODE` - Enable demo data (default: true)
+- `DEMO_MODE` - Enable demo data (default: false - ALL LIVE mode with real market data)
 
 **Frontend** (`frontend/app.js`):
 - `API_URL` - Backend API URL (default: http://localhost:3001)
@@ -122,12 +122,14 @@ docker compose up -d --build
 
 ### Production Mode
 
-For production deployment:
+The system now runs in **ALL LIVE mode by default**, using real market data, real volumes, real slippage impact, and real digital gas fees.
 
-1. Disable demo mode in backend:
+For demo/testing purposes only:
+
+1. Enable demo mode in backend:
    ```yaml
    environment:
-     - DEMO_MODE=false
+     - DEMO_MODE=true
    ```
 
 2. Enable the arbitrage engine:
@@ -186,12 +188,14 @@ ports:
 ## 🔒 Security Notes
 
 ### For Development/Demo:
-- System runs in demo mode with simulated data
+- System runs in **ALL LIVE mode by default** with real market data
+- To enable demo mode, set DEMO_MODE=true
 - CORS enabled for local development
 - No authentication required
 
 ### For Production:
-- [ ] Disable demo mode
+- [ ] Configure real blockchain RPC endpoints
+- [ ] Set up proper wallet keys and security
 - [ ] Add authentication/authorization
 - [ ] Configure HTTPS/TLS
 - [ ] Set up proper firewall rules

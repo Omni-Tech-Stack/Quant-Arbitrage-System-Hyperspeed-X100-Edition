@@ -9,7 +9,7 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - DEMO_MODE=true
+      - DEMO_MODE=false
     networks:
       - arbitrage-network
     restart: unless-stopped

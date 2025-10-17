@@ -185,10 +185,14 @@ function simulateData() {
   }, 10000);
 }
 
-// Start simulation in demo mode
+// By default, system runs in ALL LIVE mode with real market data
+// Set DEMO_MODE=true to enable simulated data for testing
 if (process.env.DEMO_MODE === 'true') {
   console.log('Starting in DEMO mode with simulated data');
   simulateData();
+} else {
+  console.log('Starting in ALL LIVE mode - real market data, real volumes, real slippage, real gas fees');
+  console.log('Connect your arbitrage engine to start receiving real market opportunities');
 }
 
 const PORT = process.env.PORT || 3001;
