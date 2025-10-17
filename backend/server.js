@@ -75,6 +75,80 @@ app.get('/api/stats', (req, res) => {
   res.json(arbitrageData.stats);
 });
 
+// Calculate flashloan amount for arbitrage opportunity
+app.post('/api/calculate-flashloan', (req, res) => {
+  try {
+    const {
+      reserveInBuy,
+      reserveOutBuy,
+      reserveInSell,
+      reserveOutSell,
+      flashloanFee = 0.0009, // Default to Aave fee
+      gasCost = 100
+    } = req.body;
+
+    // Import the engine functions (assuming it's available)
+    // In production, this would be properly imported at the top
+    const flashloanAmount = 0; // Placeholder - would use real calculation
+    
+    res.json({
+      flashloanAmount,
+      flashloanFee,
+      gasCost,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Calculate market impact for a trade
+app.post('/api/calculate-impact', (req, res) => {
+  try {
+    const {
+      reserveIn,
+      reserveOut,
+      tradeAmount
+    } = req.body;
+
+    // Placeholder for actual calculation
+    const impact = 0;
+    
+    res.json({
+      marketImpact: impact,
+      reserveIn,
+      reserveOut,
+      tradeAmount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Simulate parallel flashloan paths
+app.post('/api/simulate-paths', (req, res) => {
+  try {
+    const {
+      paths,
+      flashloanAmounts,
+      flashloanFee = 0.0009,
+      gasCosts
+    } = req.body;
+
+    // Placeholder for actual calculation
+    const results = [];
+    
+    res.json({
+      results,
+      bestPathIndex: 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Post new opportunity (from arbitrage engine)
 app.post('/api/opportunities', (req, res) => {
   const opportunity = {
@@ -134,7 +208,11 @@ function simulateData() {
       pair: tokens[Math.floor(Math.random() * tokens.length)],
       expectedProfit: (Math.random() * 100 + 10).toFixed(2),
       slippage: (Math.random() * 2).toFixed(4),
-      confidence: (Math.random() * 30 + 70).toFixed(2)
+      confidence: (Math.random() * 30 + 70).toFixed(2),
+      flashloanAmount: (Math.random() * 50000 + 10000).toFixed(2),
+      flashloanFee: '0.0009',
+      marketImpact: (Math.random() * 5).toFixed(4),
+      estimatedGas: Math.floor(Math.random() * 200000 + 150000)
     };
     
     arbitrageData.opportunities.push(opportunity);
@@ -161,7 +239,11 @@ function simulateData() {
         success: success,
         profit: success ? parseFloat(opp.expectedProfit) * (0.8 + Math.random() * 0.4) : 0,
         actualSlippage: parseFloat(opp.slippage) * (0.9 + Math.random() * 0.2),
-        gasUsed: (Math.random() * 200000 + 100000).toFixed(0)
+        gasUsed: (Math.random() * 200000 + 100000).toFixed(0),
+        flashloanAmount: opp.flashloanAmount,
+        flashloanFee: opp.flashloanFee,
+        marketImpact: opp.marketImpact,
+        executionTime: (Math.random() * 3000 + 500).toFixed(0) + 'ms'
       };
       
       arbitrageData.trades.push(trade);

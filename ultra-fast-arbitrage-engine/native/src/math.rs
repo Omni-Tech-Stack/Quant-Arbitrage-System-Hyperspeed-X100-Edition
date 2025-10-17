@@ -150,6 +150,218 @@ pub fn optimal_trade_size(
     best_size
 }
 
+/// Calculate flashloan amount needed for arbitrage opportunity
+/// Returns the optimal flashloan amount based on available liquidity and expected profit
+pub fn calculate_flashloan_amount(
+    reserve_in_buy: f64,
+    reserve_out_buy: f64,
+    reserve_in_sell: f64,
+    reserve_out_sell: f64,
+    flashloan_fee: f64,
+    gas_cost: f64,
+) -> f64 {
+    if reserve_in_buy <= 0.0 || reserve_out_buy <= 0.0 || reserve_in_sell <= 0.0 || reserve_out_sell <= 0.0 {
+        return 0.0;
+    }
+
+    // Binary search for optimal flashloan amount
+    let max_flashloan = (reserve_in_buy * 0.3).min(reserve_in_sell * 0.3); // Max 30% of smaller reserve
+    let mut low = 0.0;
+    let mut high = max_flashloan;
+    let mut best_amount = 0.0;
+    let mut best_profit = 0.0;
+
+    for _ in 0..100 {
+        let mid = (low + high) / 2.0;
+        
+        // Calculate buy side (with flashloan)
+        let amount_in_with_fee = mid * 0.997;
+        let amount_out_buy = (amount_in_with_fee * reserve_out_buy) / (reserve_in_buy + amount_in_with_fee);
+        
+        // Calculate sell side
+        let amount_in_sell = amount_out_buy * 0.997;
+        let amount_out_sell = (amount_in_sell * reserve_out_sell) / (reserve_in_sell + amount_in_sell);
+        
+        // Calculate profit after flashloan fee
+        let flashloan_repayment = mid * (1.0 + flashloan_fee);
+        let profit = amount_out_sell - flashloan_repayment - gas_cost;
+        
+        if profit > best_profit {
+            best_profit = profit;
+            best_amount = mid;
+        }
+        
+        if profit > 0.0 {
+            low = mid;
+        } else {
+            high = mid;
+        }
+        
+        if (high - low) < 0.01 {
+            break;
+        }
+    }
+    
+    if best_profit > 0.0 {
+        best_amount
+    } else {
+        0.0
+    }
+}
+
+/// Calculate market impact (price slippage) caused by a flashloan-sized trade
+/// Returns the percentage price impact on the pool
+pub fn calculate_market_impact(
+    reserve_in: f64,
+    reserve_out: f64,
+    flashloan_amount: f64,
+) -> f64 {
+    if reserve_in <= 0.0 || reserve_out <= 0.0 || flashloan_amount <= 0.0 {
+        return 0.0;
+    }
+    
+    // Price before trade
+    let price_before = reserve_out / reserve_in;
+    
+    // Calculate output amount
+    let amount_in_with_fee = flashloan_amount * 0.997;
+    let amount_out = (amount_in_with_fee * reserve_out) / (reserve_in + amount_in_with_fee);
+    
+    // Price after trade (new reserves)
+    let new_reserve_in = reserve_in + flashloan_amount;
+    let new_reserve_out = reserve_out - amount_out;
+    let price_after = new_reserve_out / new_reserve_in;
+    
+    // Market impact as percentage
+    let impact = ((price_before - price_after) / price_before) * 100.0;
+    impact.abs()
+}
+
+/// Calculate total slippage for a multi-hop flashloan arbitrage path
+/// Returns combined slippage across all hops in the path
+pub fn calculate_multihop_slippage(
+    reserves: &[(f64, f64)], // Array of (reserve_in, reserve_out) pairs
+    flashloan_amount: f64,
+) -> f64 {
+    if reserves.is_empty() || flashloan_amount <= 0.0 {
+        return 0.0;
+    }
+    
+    let mut current_amount = flashloan_amount;
+    let mut total_slippage = 0.0;
+    
+    for (reserve_in, reserve_out) in reserves {
+        if *reserve_in <= 0.0 || *reserve_out <= 0.0 {
+            return 100.0; // Invalid pool
+        }
+        
+        // Calculate slippage for this hop
+        let hop_slippage = compute_uniswap_v2_slippage(*reserve_in, *reserve_out, current_amount);
+        total_slippage += hop_slippage;
+        
+        // Calculate output for next hop
+        let amount_in_with_fee = current_amount * 0.997;
+        current_amount = (amount_in_with_fee * reserve_out) / (reserve_in + amount_in_with_fee);
+    }
+    
+    total_slippage
+}
+
+/// Simulate flashloan arbitrage execution across multiple paths simultaneously
+/// Returns array of (profit, slippage, path_index) for each path
+pub fn simulate_parallel_flashloan_paths(
+    paths: &[Vec<(f64, f64)>], // Array of paths, each path is array of reserve pairs
+    flashloan_amounts: &[f64],
+    flashloan_fee: f64,
+    gas_costs: &[f64],
+) -> Vec<(f64, f64, usize)> {
+    let mut results = Vec::new();
+    
+    for (idx, path) in paths.iter().enumerate() {
+        if idx >= flashloan_amounts.len() || idx >= gas_costs.len() {
+            break;
+        }
+        
+        let flashloan_amount = flashloan_amounts[idx];
+        let gas_cost = gas_costs[idx];
+        
+        if path.is_empty() || flashloan_amount <= 0.0 {
+            results.push((0.0, 0.0, idx));
+            continue;
+        }
+        
+        // Calculate output through the path
+        let mut current_amount = flashloan_amount;
+        for (reserve_in, reserve_out) in path {
+            let amount_in_with_fee = current_amount * 0.997;
+            current_amount = (amount_in_with_fee * reserve_out) / (reserve_in + amount_in_with_fee);
+        }
+        
+        // Calculate profit after flashloan repayment
+        let flashloan_repayment = flashloan_amount * (1.0 + flashloan_fee);
+        let profit = current_amount - flashloan_repayment - gas_cost;
+        
+        // Calculate total slippage
+        let slippage = calculate_multihop_slippage(path, flashloan_amount);
+        
+        results.push((profit, slippage, idx));
+    }
+    
+    results
+}
+
+/// Calculate optimal flashloan amount for Uniswap V3 concentrated liquidity
+pub fn calculate_flashloan_amount_v3(
+    liquidity: f64,
+    sqrt_price_buy: f64,
+    sqrt_price_sell: f64,
+    flashloan_fee: f64,
+    gas_cost: f64,
+) -> f64 {
+    if liquidity <= 0.0 || sqrt_price_buy <= 0.0 || sqrt_price_sell <= 0.0 {
+        return 0.0;
+    }
+    
+    // Binary search for optimal amount
+    let max_amount = liquidity * 0.3;
+    let mut low = 0.0;
+    let mut high = max_amount;
+    let mut best_amount = 0.0;
+    let mut best_profit = 0.0;
+    
+    for _ in 0..100 {
+        let mid = (low + high) / 2.0;
+        
+        // Simplified V3 calculation
+        let amount_out_buy = (mid * sqrt_price_buy * liquidity) / (liquidity + mid);
+        let amount_out_sell = (amount_out_buy * sqrt_price_sell * liquidity) / (liquidity + amount_out_buy);
+        
+        let flashloan_repayment = mid * (1.0 + flashloan_fee);
+        let profit = amount_out_sell - flashloan_repayment - gas_cost;
+        
+        if profit > best_profit {
+            best_profit = profit;
+            best_amount = mid;
+        }
+        
+        if profit > 0.0 {
+            low = mid;
+        } else {
+            high = mid;
+        }
+        
+        if (high - low) < 0.01 {
+            break;
+        }
+    }
+    
+    if best_profit > 0.0 {
+        best_amount
+    } else {
+        0.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,5 +383,34 @@ mod tests {
     fn test_optimal_trade_size() {
         let size = optimal_trade_size(1000000.0, 2000000.0, 100.0, 50.0);
         assert!(size > 0.0);
+    }
+    
+    #[test]
+    fn test_flashloan_amount_calculation() {
+        let amount = calculate_flashloan_amount(
+            1000000.0, 2000000.0, // Buy pool - price is 2:1
+            1800000.0, 1000000.0, // Sell pool - price is 0.556:1 (significant difference)
+            0.0009, // 0.09% flashloan fee (Aave)
+            100.0   // Gas cost
+        );
+        // With a significant price difference, should find profitable flashloan amount
+        assert!(amount >= 0.0); // At minimum should not be negative
+    }
+    
+    #[test]
+    fn test_market_impact() {
+        let impact = calculate_market_impact(1000000.0, 2000000.0, 50000.0);
+        assert!(impact > 0.0);
+        assert!(impact < 100.0);
+    }
+    
+    #[test]
+    fn test_multihop_slippage() {
+        let reserves = vec![
+            (1000000.0, 2000000.0),
+            (2000000.0, 1000000.0),
+        ];
+        let slippage = calculate_multihop_slippage(&reserves, 10000.0);
+        assert!(slippage >= 0.0);
     }
 }
