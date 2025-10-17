@@ -162,5 +162,179 @@ export function calculateFlashloanAmountV3(
   );
 }
 
+// New arbitrage flow functions
+
+/**
+ * Step 1: Calculate token price from pool reserves
+ * Formula: p_t = reserve_out / reserve_in
+ */
+export function calculatePoolPrice(
+  reserveIn: number,
+  reserveOut: number
+): number {
+  return native.calculatePoolPrice(reserveIn, reserveOut);
+}
+
+/**
+ * Step 2: Identify arbitrage opportunity by comparing prices across pools
+ * Returns [hasOpportunity (0/1), priceDifference%, direction (0/1/2)]
+ * direction: 0 = no opportunity, 1 = buy pool1/sell pool2, 2 = buy pool2/sell pool1
+ */
+export function identifyArbitrageOpportunity(
+  pool1ReserveIn: number,
+  pool1ReserveOut: number,
+  pool2ReserveIn: number,
+  pool2ReserveOut: number,
+  minPriceDiffPct: number
+): number[] {
+  return native.identifyArbitrageOpportunity(
+    pool1ReserveIn,
+    pool1ReserveOut,
+    pool2ReserveIn,
+    pool2ReserveOut,
+    minPriceDiffPct
+  );
+}
+
+/**
+ * Step 3: Calculate input amount needed for desired output
+ * Formula: amountIn = (ReserveIn × AmountOut × 1000) / ((ReserveOut - AmountOut) × 997) + 1
+ */
+export function calculateAmountIn(
+  reserveIn: number,
+  reserveOut: number,
+  amountOut: number
+): number {
+  return native.calculateAmountIn(reserveIn, reserveOut, amountOut);
+}
+
+/**
+ * Step 3: Calculate output amount for given input
+ * Formula: amountOut = (ReserveOut × AmountIn × 997) / (ReserveIn × 1000 + AmountIn × 997)
+ */
+export function calculateAmountOut(
+  reserveIn: number,
+  reserveOut: number,
+  amountIn: number
+): number {
+  return native.calculateAmountOut(reserveIn, reserveOut, amountIn);
+}
+
+/**
+ * Step 4: Estimate profitability of arbitrage
+ * Formula: profit = AmountOut_sell - AmountIn_buy - gas_fees - flashloan_fees
+ */
+export function estimateArbitrageProfit(
+  buyReserveIn: number,
+  buyReserveOut: number,
+  sellReserveIn: number,
+  sellReserveOut: number,
+  amountIn: number,
+  gasCost: number,
+  flashloanFeePct: number
+): number {
+  return native.estimateArbitrageProfit(
+    buyReserveIn,
+    buyReserveOut,
+    sellReserveIn,
+    sellReserveOut,
+    amountIn,
+    gasCost,
+    flashloanFeePct
+  );
+}
+
+/**
+ * Step 5: Solve quadratic equation ax² + bx + c = 0
+ * Returns [root1, root2]
+ */
+export function solveQuadratic(a: number, b: number, c: number): number[] {
+  return native.solveQuadratic(a, b, c);
+}
+
+/**
+ * Step 5: Find optimal trade size using quadratic optimization
+ * This finds the trade size that maximizes profit considering slippage
+ */
+export function optimizeTradeSizeQuadratic(
+  buyReserveIn: number,
+  buyReserveOut: number,
+  sellReserveIn: number,
+  sellReserveOut: number,
+  gasCost: number,
+  flashloanFeePct: number
+): number {
+  return native.optimizeTradeSizeQuadratic(
+    buyReserveIn,
+    buyReserveOut,
+    sellReserveIn,
+    sellReserveOut,
+    gasCost,
+    flashloanFeePct
+  );
+}
+
+/**
+ * Step 6: Calculate TWAP (Time-Weighted Average Price)
+ * Formula: TWAP = (a_t2 - a_t1) / (t2 - t1)
+ * @param priceSamples - Array of [timestamp, price] pairs
+ */
+export function calculateTWAP(priceSamples: number[][]): number {
+  return native.calculateTwap(priceSamples);
+}
+
+/**
+ * Step 6: Validate arbitrage opportunity using TWAP
+ * Returns true if current price is close to TWAP (not manipulated)
+ */
+export function validateWithTWAP(
+  currentPrice: number,
+  twap: number,
+  maxDeviationPct: number
+): boolean {
+  return native.validateWithTwap(currentPrice, twap, maxDeviationPct);
+}
+
+/**
+ * Step 7: Complete arbitrage execution flow
+ * Returns [shouldExecute (0/1), optimalAmount, expectedProfit]
+ * 
+ * This function implements the complete logical flow:
+ * 1. Identify Arbitrage Opportunities
+ * 2. Determine Direction of Arbitrage
+ * 3. Calculate Trade Amounts
+ * 4. Estimate Profitability
+ * 5. Optimize Trade Size
+ * 6. Validate Using TWAP
+ * 7. Execute Decision
+ */
+export function executeArbitrageFlow(
+  pool1ReserveIn: number,
+  pool1ReserveOut: number,
+  pool2ReserveIn: number,
+  pool2ReserveOut: number,
+  priceSamplesPool1: number[][],
+  priceSamplesPool2: number[][],
+  gasCost: number,
+  flashloanFeePct: number,
+  minPriceDiffPct: number,
+  maxTwapDeviationPct: number,
+  minProfitThreshold: number
+): number[] {
+  return native.executeArbitrageFlow(
+    pool1ReserveIn,
+    pool1ReserveOut,
+    pool2ReserveIn,
+    pool2ReserveOut,
+    priceSamplesPool1,
+    priceSamplesPool2,
+    gasCost,
+    flashloanFeePct,
+    minPriceDiffPct,
+    maxTwapDeviationPct,
+    minProfitThreshold
+  );
+}
+
 // Export native module for advanced usage
 export { native };

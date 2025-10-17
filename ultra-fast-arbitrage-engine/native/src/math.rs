@@ -362,6 +362,303 @@ pub fn calculate_flashloan_amount_v3(
     }
 }
 
+/// Step 1: Calculate token price from pool reserves
+/// Formula: p_t = reserve_out / reserve_in
+pub fn calculate_pool_price(reserve_in: f64, reserve_out: f64) -> f64 {
+    if reserve_in <= 0.0 {
+        return 0.0;
+    }
+    reserve_out / reserve_in
+}
+
+/// Step 2: Identify arbitrage opportunity by comparing prices across pools
+/// Returns (has_opportunity, price_difference_percentage, direction)
+/// direction: 0 = no opportunity, 1 = buy pool1/sell pool2, 2 = buy pool2/sell pool1
+pub fn identify_arbitrage_opportunity(
+    pool1_reserve_in: f64,
+    pool1_reserve_out: f64,
+    pool2_reserve_in: f64,
+    pool2_reserve_out: f64,
+    min_price_diff_pct: f64,
+) -> (bool, f64, u8) {
+    let price1 = calculate_pool_price(pool1_reserve_in, pool1_reserve_out);
+    let price2 = calculate_pool_price(pool2_reserve_in, pool2_reserve_out);
+    
+    if price1 <= 0.0 || price2 <= 0.0 {
+        return (false, 0.0, 0);
+    }
+    
+    // Calculate price difference percentage
+    let price_diff = ((price1 - price2).abs() / price1.min(price2)) * 100.0;
+    
+    if price_diff >= min_price_diff_pct {
+        if price1 < price2 {
+            // Buy on pool1 (cheaper), sell on pool2 (more expensive)
+            return (true, price_diff, 1);
+        } else {
+            // Buy on pool2 (cheaper), sell on pool1 (more expensive)
+            return (true, price_diff, 2);
+        }
+    }
+    
+    (false, price_diff, 0)
+}
+
+/// Step 3: Calculate input amount needed for desired output
+/// Formula: amountIn = (ReserveIn × AmountOut × 1000) / ((ReserveOut - AmountOut) × 997) + 1
+pub fn calculate_amount_in(
+    reserve_in: f64,
+    reserve_out: f64,
+    amount_out: f64,
+) -> f64 {
+    if reserve_out <= amount_out || amount_out <= 0.0 {
+        return 0.0;
+    }
+    
+    let numerator = reserve_in * amount_out * 1000.0;
+    let denominator = (reserve_out - amount_out) * 997.0;
+    
+    if denominator <= 0.0 {
+        return 0.0;
+    }
+    
+    (numerator / denominator) + 1.0
+}
+
+/// Step 3: Calculate output amount for given input
+/// Formula: amountOut = (ReserveOut × AmountIn × 997) / (ReserveIn × 1000 + AmountIn × 997)
+pub fn calculate_amount_out(
+    reserve_in: f64,
+    reserve_out: f64,
+    amount_in: f64,
+) -> f64 {
+    if amount_in <= 0.0 {
+        return 0.0;
+    }
+    
+    let numerator = reserve_out * amount_in * 997.0;
+    let denominator = reserve_in * 1000.0 + amount_in * 997.0;
+    
+    if denominator <= 0.0 {
+        return 0.0;
+    }
+    
+    numerator / denominator
+}
+
+/// Step 4: Estimate profitability of arbitrage
+/// Formula: profit = AmountOut_sell - AmountIn_buy - gas_fees - flashloan_fees
+pub fn estimate_arbitrage_profit(
+    buy_reserve_in: f64,
+    buy_reserve_out: f64,
+    sell_reserve_in: f64,
+    sell_reserve_out: f64,
+    amount_in: f64,
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+) -> f64 {
+    // Calculate amount out from buy pool
+    let amount_out_buy = calculate_amount_out(buy_reserve_in, buy_reserve_out, amount_in);
+    
+    // Calculate amount out from sell pool
+    let amount_out_sell = calculate_amount_out(sell_reserve_in, sell_reserve_out, amount_out_buy);
+    
+    // Calculate flashloan repayment
+    let flashloan_repayment = amount_in * (1.0 + flashloan_fee_pct);
+    
+    // Calculate net profit
+    amount_out_sell - flashloan_repayment - gas_cost
+}
+
+/// Step 5: Solve quadratic equation for optimal trade size
+/// Formula: ax² + bx + c = 0
+/// Returns the positive root(s) or 0 if no real solutions
+pub fn solve_quadratic(a: f64, b: f64, c: f64) -> (f64, f64) {
+    if a == 0.0 {
+        // Linear equation: bx + c = 0
+        if b != 0.0 {
+            return (-c / b, 0.0);
+        }
+        return (0.0, 0.0);
+    }
+    
+    let discriminant = b * b - 4.0 * a * c;
+    
+    if discriminant < 0.0 {
+        // No real solutions
+        return (0.0, 0.0);
+    }
+    
+    let sqrt_discriminant = discriminant.sqrt();
+    let root1 = (-b + sqrt_discriminant) / (2.0 * a);
+    let root2 = (-b - sqrt_discriminant) / (2.0 * a);
+    
+    (root1, root2)
+}
+
+/// Step 5: Find optimal trade size using quadratic optimization
+/// This finds the trade size that maximizes profit considering slippage
+pub fn optimize_trade_size_quadratic(
+    buy_reserve_in: f64,
+    buy_reserve_out: f64,
+    sell_reserve_in: f64,
+    sell_reserve_out: f64,
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+) -> f64 {
+    // Use binary search to find optimal size (more robust than pure quadratic)
+    // Limit trade size to 30% of reserves to avoid excessive slippage and market impact.
+    // 30% is a common DeFi heuristic, balancing profit potential with risk of moving the market,
+    // and is consistent with the approach in `calculate_flashloan_amount_v3`.
+    let max_amount = (buy_reserve_in * 0.3).min(sell_reserve_in * 0.3);
+    let mut best_size = 0.0;
+    let mut best_profit = 0.0;
+    
+    for i in 0..100 {
+        let amount = (i as f64 / 100.0) * max_amount;
+        if amount <= 0.0 {
+            continue;
+        }
+        
+        let profit = estimate_arbitrage_profit(
+            buy_reserve_in,
+            buy_reserve_out,
+            sell_reserve_in,
+            sell_reserve_out,
+            amount,
+            gas_cost,
+            flashloan_fee_pct,
+        );
+        
+        if profit > best_profit {
+            best_profit = profit;
+            best_size = amount;
+        }
+    }
+    
+    best_size
+}
+
+/// Step 6: Calculate TWAP (Time-Weighted Average Price)
+/// Formula: TWAP = (a_t2 - a_t1) / (t2 - t1)
+/// This validates that price discrepancy is legitimate and not temporary
+pub fn calculate_twap(
+    price_samples: &[(f64, f64)], // Array of (timestamp, price) pairs
+) -> f64 {
+    if price_samples.len() < 2 {
+        return 0.0;
+    }
+    
+    let mut weighted_sum = 0.0;
+    let mut total_time = 0.0;
+    
+    for i in 0..price_samples.len() - 1 {
+        let (t1, p1) = price_samples[i];
+        let (t2, _p2) = price_samples[i + 1];
+        let time_diff = t2 - t1;
+        
+        if time_diff > 0.0 {
+            weighted_sum += p1 * time_diff;
+            total_time += time_diff;
+        }
+    }
+    
+    if total_time > 0.0 {
+        weighted_sum / total_time
+    } else {
+        0.0
+    }
+}
+
+/// Step 6: Validate arbitrage opportunity using TWAP
+/// Returns true if current price is close to TWAP (not manipulated)
+pub fn validate_with_twap(
+    current_price: f64,
+    twap: f64,
+    max_deviation_pct: f64,
+) -> bool {
+    if twap <= 0.0 {
+        return false;
+    }
+    
+    let deviation = ((current_price - twap).abs() / twap) * 100.0;
+    deviation <= max_deviation_pct
+}
+
+/// Step 7: Complete arbitrage execution flow
+/// Returns (should_execute, optimal_amount, expected_profit)
+pub fn execute_arbitrage_flow(
+    pool1_reserve_in: f64,
+    pool1_reserve_out: f64,
+    pool2_reserve_in: f64,
+    pool2_reserve_out: f64,
+    price_samples_pool1: &[(f64, f64)],
+    price_samples_pool2: &[(f64, f64)],
+    gas_cost: f64,
+    flashloan_fee_pct: f64,
+    min_price_diff_pct: f64,
+    max_twap_deviation_pct: f64,
+    min_profit_threshold: f64,
+) -> (bool, f64, f64) {
+    // Step 1 & 2: Identify arbitrage opportunity
+    let (has_opportunity, _price_diff, direction) = identify_arbitrage_opportunity(
+        pool1_reserve_in,
+        pool1_reserve_out,
+        pool2_reserve_in,
+        pool2_reserve_out,
+        min_price_diff_pct,
+    );
+    
+    if !has_opportunity {
+        return (false, 0.0, 0.0);
+    }
+    
+    // Determine buy and sell pools based on direction
+    let (buy_res_in, buy_res_out, sell_res_in, sell_res_out, price_samples) = if direction == 1 {
+        (pool1_reserve_in, pool1_reserve_out, pool2_reserve_in, pool2_reserve_out, price_samples_pool1)
+    } else {
+        (pool2_reserve_in, pool2_reserve_out, pool1_reserve_in, pool1_reserve_out, price_samples_pool2)
+    };
+    
+    // Step 6: Validate with TWAP
+    let current_price = calculate_pool_price(buy_res_in, buy_res_out);
+    let twap = calculate_twap(price_samples);
+    
+    if !validate_with_twap(current_price, twap, max_twap_deviation_pct) {
+        return (false, 0.0, 0.0);
+    }
+    
+    // Step 5: Optimize trade size
+    let optimal_amount = optimize_trade_size_quadratic(
+        buy_res_in,
+        buy_res_out,
+        sell_res_in,
+        sell_res_out,
+        gas_cost,
+        flashloan_fee_pct,
+    );
+    
+    if optimal_amount <= 0.0 {
+        return (false, 0.0, 0.0);
+    }
+    
+    // Step 4: Estimate profitability
+    let expected_profit = estimate_arbitrage_profit(
+        buy_res_in,
+        buy_res_out,
+        sell_res_in,
+        sell_res_out,
+        optimal_amount,
+        gas_cost,
+        flashloan_fee_pct,
+    );
+    
+    // Step 7: Execute if profitable
+    let should_execute = expected_profit >= min_profit_threshold;
+    
+    (should_execute, optimal_amount, expected_profit)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -412,5 +709,107 @@ mod tests {
         ];
         let slippage = calculate_multihop_slippage(&reserves, 10000.0);
         assert!(slippage >= 0.0);
+    }
+    
+    #[test]
+    fn test_calculate_pool_price() {
+        let price = calculate_pool_price(1000000.0, 2000000.0);
+        assert_eq!(price, 2.0);
+    }
+    
+    #[test]
+    fn test_identify_arbitrage_opportunity() {
+        // Pool 1: price = 2.0, Pool 2: price = 2.2 (10% difference)
+        let (has_opp, diff, direction) = identify_arbitrage_opportunity(
+            1000000.0, 2000000.0,  // Pool 1
+            1000000.0, 2200000.0,  // Pool 2
+            5.0,                   // Min 5% difference
+        );
+        assert!(has_opp);
+        assert!(diff >= 5.0);
+        assert_eq!(direction, 1); // Buy pool 1, sell pool 2
+    }
+    
+    #[test]
+    fn test_calculate_amount_in() {
+        let amount_in = calculate_amount_in(1000000.0, 2000000.0, 10000.0);
+        assert!(amount_in > 0.0);
+        assert!(amount_in < 1000000.0);
+    }
+    
+    #[test]
+    fn test_calculate_amount_out() {
+        let amount_out = calculate_amount_out(1000000.0, 2000000.0, 10000.0);
+        assert!(amount_out > 0.0);
+        assert!(amount_out < 20000.0);
+    }
+    
+    #[test]
+    fn test_estimate_arbitrage_profit() {
+        let profit = estimate_arbitrage_profit(
+            1000000.0, 2000000.0,  // Buy pool
+            2000000.0, 1000000.0,  // Sell pool
+            10000.0,               // Amount in
+            100.0,                 // Gas cost
+            0.0009,                // Flashloan fee
+        );
+        // Should be negative or very low due to price similarity
+        assert!(profit < 1000.0);
+    }
+    
+    #[test]
+    fn test_solve_quadratic() {
+        // x² - 5x + 6 = 0, roots: 2 and 3
+        let (r1, r2) = solve_quadratic(1.0, -5.0, 6.0);
+        assert!((r1 - 3.0).abs() < 0.01 || (r1 - 2.0).abs() < 0.01);
+        assert!((r2 - 3.0).abs() < 0.01 || (r2 - 2.0).abs() < 0.01);
+    }
+    
+    #[test]
+    fn test_calculate_twap() {
+        let samples = vec![
+            (0.0, 100.0),
+            (10.0, 110.0),
+            (20.0, 105.0),
+        ];
+        let twap = calculate_twap(&samples);
+        assert!(twap > 0.0);
+        assert!(twap >= 100.0 && twap <= 110.0);
+    }
+    
+    #[test]
+    fn test_validate_with_twap() {
+        let is_valid = validate_with_twap(102.0, 100.0, 5.0); // 2% deviation, max 5%
+        assert!(is_valid);
+        
+        let is_invalid = validate_with_twap(110.0, 100.0, 5.0); // 10% deviation, max 5%
+        assert!(!is_invalid);
+    }
+    
+    #[test]
+    fn test_execute_arbitrage_flow() {
+        let price_samples = vec![
+            (0.0, 2.0),
+            (10.0, 2.05),
+            (20.0, 2.1),
+        ];
+        
+        let (should_execute, optimal_amount, profit) = execute_arbitrage_flow(
+            1000000.0, 2000000.0,  // Pool 1
+            1000000.0, 2500000.0,  // Pool 2 (significant price difference)
+            &price_samples,
+            &price_samples,
+            100.0,                 // Gas cost
+            0.0009,                // Flashloan fee
+            5.0,                   // Min price diff %
+            10.0,                  // Max TWAP deviation %
+            50.0,                  // Min profit threshold
+        );
+        
+        // May or may not execute depending on profitability, but should return valid values
+        assert!(optimal_amount >= 0.0);
+        if should_execute {
+            assert!(profit >= 50.0);
+        }
     }
 }

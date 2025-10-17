@@ -10,7 +10,9 @@
     "build:all": "yarn build:rust && yarn build",
     "test": "node test.js",
     "test:verbose": "node test-verbose.js",
-    "test:all": "yarn test && echo '\n\nFor detailed calculations, run: yarn test:verbose'",
+    "test:flow": "node test-arbitrage-flow.js",
+    "test:all": "yarn test && yarn test:flow && echo '\n\nFor detailed calculations, run: yarn test:verbose'",
+    "demo": "node demo-arbitrage-flow.js",
     "setup": "node setup.js"
   },
   "napi": {
