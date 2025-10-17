@@ -4,6 +4,7 @@ package-lock.json
 
 # Test results (keep template/example, exclude generated)
 backend/test-results/*.json
+!backend/test-results/comprehensive-report.json
 !backend/test-results/.gitkeep
 
 # Logs
@@ -40,3 +41,10 @@ temp/
 *.tmp
 # Wallet files (contain sensitive data)
 backend/wallets/
+
+# Verification output
+verification-output.log
+
+# Rust build artifacts
+ultra-fast-arbitrage-engine/native/target/
+*.node
