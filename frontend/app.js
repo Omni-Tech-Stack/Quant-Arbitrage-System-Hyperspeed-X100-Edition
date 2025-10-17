@@ -119,15 +119,15 @@ function updateDashboard(data) {
 
 // Update Statistics
 function updateStats(stats) {
-    totalTradesEl.textContent = stats.totalTrades;
+    totalTradesEl.textContent = stats.totalTrades || 0;
     
     const successRate = stats.totalTrades > 0 
         ? (stats.successfulTrades / stats.totalTrades * 100).toFixed(1)
         : 0;
     successRateEl.textContent = `${successRate}%`;
     
-    totalProfitEl.textContent = `$${stats.totalProfit.toFixed(2)}`;
-    avgSlippageEl.textContent = `${stats.avgSlippage.toFixed(4)}%`;
+    totalProfitEl.textContent = `$${(stats.totalProfit || 0).toFixed(2)}`;
+    avgSlippageEl.textContent = `${(stats.avgSlippage || 0).toFixed(4)}%`;
 }
 
 // Add Opportunity to Table
@@ -181,9 +181,9 @@ function addTrade(trade) {
         <td>${trade.pool2}</td>
         <td>${trade.pair}</td>
         <td class="${statusClass}">${trade.success ? '✓ Success' : '✗ Failed'}</td>
-        <td class="${profitClass}">$${trade.profit.toFixed(2)}</td>
-        <td>${trade.actualSlippage.toFixed(4)}%</td>
-        <td>${parseInt(trade.gasUsed).toLocaleString()}</td>
+        <td class="${profitClass}">$${(trade.profit || 0).toFixed(2)}</td>
+        <td>${(trade.actualSlippage || 0).toFixed(4)}%</td>
+        <td>${parseInt(trade.gasUsed || 0).toLocaleString()}</td>
         ${trade.flashloanAmount ? `<td>$${parseFloat(trade.flashloanAmount).toFixed(0)}</td>` : '<td>-</td>'}
         ${trade.executionTime ? `<td>${trade.executionTime}</td>` : '<td>-</td>'}
     `;
