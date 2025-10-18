@@ -76,7 +76,7 @@ class ObservabilityMetrics:
             "total_gas_used": 0,
             "avg_gas_price_gwei": 0.0,
             "max_gas_price_gwei": 0.0,
-            "min_gas_price_gwei": float('inf')
+            "min_gas_price_gwei": None
         }
         
         # Protocol-specific metrics
