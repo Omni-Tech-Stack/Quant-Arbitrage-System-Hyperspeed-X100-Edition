@@ -64,7 +64,27 @@ async function startServer() {
 // Stop server
 function stopServer() {
   if (serverProcess) {
-    serverProcess.kill();
+    // Send SIGTERM first, then SIGKILL after timeout if still running
+    let killed = false;
+    const proc = serverProcess;
+    const killTimeout = setTimeout(() => {
+      if (!killed && proc.exitCode === null) {
+        try {
+          proc.kill('SIGKILL');
+        } catch (e) {
+          // Ignore if already dead
+        }
+      }
+    }, 5000);
+    proc.once('exit', () => {
+      killed = true;
+      clearTimeout(killTimeout);
+    });
+    try {
+      proc.kill('SIGTERM');
+    } catch (e) {
+      // Ignore if already dead
+    }
     serverProcess = null;
   }
 }
