@@ -52,6 +52,7 @@ class TradeRecord:
     # P&L
     gross_profit_usd: float
     net_profit_usd: float
+    # ROI is calculated as (net_profit_usd / amount_in) * 100
     roi_percent: float
     
     # Execution
