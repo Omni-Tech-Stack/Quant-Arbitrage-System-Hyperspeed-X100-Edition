@@ -19,35 +19,35 @@ jobs:
   test:
     name: Run API Tests
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
-      
+
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-      
+
       - name: Install ultra-fast-arbitrage-engine dependencies
         working-directory: ./ultra-fast-arbitrage-engine
         run: npm install
-      
+
       - name: Build Rust backend
         working-directory: ./ultra-fast-arbitrage-engine/native
         run: cargo build --release
-      
+
       - name: Copy Rust artifacts
         working-directory: ./ultra-fast-arbitrage-engine
         run: |
@@ -55,21 +55,21 @@ jobs:
           cp native/target/release/libmath_engine.so native/math_engine.node 2>/dev/null || \
           cp native/target/release/libmath_engine.dylib native/math_engine.node 2>/dev/null || \
           cp native/target/release/math_engine.dll native/math_engine.node 2>/dev/null || true
-      
+
       - name: Build TypeScript
         working-directory: ./ultra-fast-arbitrage-engine
         run: npm run build
-      
+
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm ci
-      
+
       - name: Run comprehensive tests
         working-directory: ./backend
         run: npm test
         env:
           API_BASE_URL: http://localhost:3001
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -78,7 +78,7 @@ jobs:
           path: backend/test-results/unit-test-results-*.json
           retention-days: 30
           overwrite: true
-      
+
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,7 +87,7 @@ jobs:
           path: backend/test-results/TEST-REPORT.md
           retention-days: 30
           overwrite: true
-      
+
       - name: Comment PR with test results
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v6
@@ -95,13 +95,13 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             try {
               const reportPath = 'backend/test-results/TEST-REPORT.md';
               if (fs.existsSync(reportPath)) {
                 const report = fs.readFileSync(reportPath, 'utf8');
                 const nodeVersion = '${{ matrix.node-version }}';
-                
+
                 await github.rest.issues.createComment({
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
@@ -112,7 +112,7 @@ jobs:
             } catch (error) {
               console.error('Error posting comment:', error);
             }
-      
+
       - name: Check test results
         if: always()
         working-directory: ./backend/test-results
@@ -136,25 +136,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: always()
-    
+
     steps:
       - name: Download all test results
         uses: actions/download-artifact@v4
         with:
           path: all-test-results
-      
+
       - name: Display summary
         run: |
           echo "# Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Test Results by Node Version" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           for dir in all-test-results/unit-test-results-node-*; do
             if [ -d "$dir" ]; then
               NODE_VERSION=$(basename "$dir" | sed 's/unit-test-results-node-//')
               echo "### Node $NODE_VERSION" >> $GITHUB_STEP_SUMMARY
-              
+
               # Find the most recent unit test results file
               UNIT_TEST_FILE=$(find "$dir" -name "unit-test-results-*.json" | sort | tail -1)
               if [ -f "$UNIT_TEST_FILE" ]; then
@@ -162,7 +162,7 @@ jobs:
                 TOTAL=$(cat "$UNIT_TEST_FILE" | grep -o '"total":[0-9]*' | head -1 | cut -d':' -f2)
                 PASSED=$(cat "$UNIT_TEST_FILE" | grep -o '"passed":[0-9]*' | head -1 | cut -d':' -f2)
                 FAILED=$(cat "$UNIT_TEST_FILE" | grep -o '"failed":[0-9]*' | head -1 | cut -d':' -f2)
-                
+
                 echo "- Total: $TOTAL" >> $GITHUB_STEP_SUMMARY
                 echo "- Passed: $PASSED ✅" >> $GITHUB_STEP_SUMMARY
                 echo "- Failed: $FAILED ❌" >> $GITHUB_STEP_SUMMARY
@@ -176,29 +176,29 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-      
+
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-      
+
       - name: Install ultra-fast-arbitrage-engine dependencies
         working-directory: ./ultra-fast-arbitrage-engine
         run: npm install
-      
+
       - name: Build Rust backend
         working-directory: ./ultra-fast-arbitrage-engine/native
         run: cargo build --release
-      
+
       - name: Copy Rust artifacts
         working-directory: ./ultra-fast-arbitrage-engine
         run: |
@@ -206,19 +206,19 @@ jobs:
           cp native/target/release/libmath_engine.so native/math_engine.node 2>/dev/null || \
           cp native/target/release/libmath_engine.dylib native/math_engine.node 2>/dev/null || \
           cp native/target/release/math_engine.dll native/math_engine.node 2>/dev/null || true
-      
+
       - name: Build TypeScript
         working-directory: ./ultra-fast-arbitrage-engine
         run: npm run build
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: npm ci
-      
+
       - name: Run performance benchmark
         working-directory: ./backend
         run: npm test 2>&1 | tee performance.log
-      
+
       - name: Extract performance metrics
         working-directory: ./backend
         run: |
@@ -226,6 +226,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Test Execution Times" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Extract durations from test output
           grep -o "Duration.*ms" performance.log | head -10 >> $GITHUB_STEP_SUMMARY || true
