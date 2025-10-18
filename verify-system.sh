@@ -5,7 +5,8 @@
 # Validates complete system integrity and readiness
 ################################################################################
 
-set -e
+# Don't exit on error - we want to complete all checks
+set +e
 
 # Colors
 RED='\033[0;31m'
