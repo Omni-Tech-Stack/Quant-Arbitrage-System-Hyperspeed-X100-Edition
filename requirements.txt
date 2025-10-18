@@ -1,12 +1,5 @@
-# Python Requirements for Quant Arbitrage System
-
-# Core dependencies (if needed for production)
-# Uncomment and install as needed:
-
-# Web3 and blockchain
-# web3>=6.0.0
-# eth-account>=0.9.0
-# eth-utils>=2.2.0
+# Python Requirements for Quant Arbitrage System: Hyperspeed X100 Edition
+# Complete unified dependency list for one-click installation
 
 # Data processing
 pandas>=2.0.0
@@ -22,17 +15,22 @@ onnx>=1.17.0
 onnxruntime>=1.16.0
 skl2onnx>=1.16.0
 
-# Async and networking
+# Web3 and blockchain (optional - uncomment if needed)
+# web3>=6.0.0
+# eth-account>=0.9.0
+# eth-utils>=2.2.0
+
+# Async and networking (optional - uncomment if needed)
 # aiohttp>=3.8.0
 # asyncio>=3.4.3
 
-# Configuration
+# Configuration (optional - uncomment if needed)
 # python-dotenv>=1.0.0
 # pyyaml>=6.0
 
-# Monitoring and logging
+# Monitoring and logging (optional - uncomment if needed)
 # prometheus-client>=0.17.0
 
-# Testing
+# Testing (optional - uncomment if needed)
 # pytest>=7.4.0
 # pytest-asyncio>=0.21.0

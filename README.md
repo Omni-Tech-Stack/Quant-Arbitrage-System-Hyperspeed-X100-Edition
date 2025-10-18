@@ -2,9 +2,29 @@
 
 ---
 
-## 🎯 One-Click Deployment
+## ⚡ ONE-CLICK INSTALLATION & DEPLOYMENT
 
-Deploy the entire system (Frontend + Backend + Dashboard) with a single command:
+### Quick Install (New!)
+
+Install the entire unified system with a single command:
+
+```bash
+./setup.sh
+```
+
+This will:
+- ✅ Check all prerequisites
+- ✅ Install ALL dependencies (Node.js + Python)
+- ✅ Build ALL modules (Backend, Frontend, Engine)
+- ✅ Set up directory structure
+- ✅ Verify installation
+- ✅ Display next steps
+
+**First time?** See [INSTALL.md](INSTALL.md) for the complete installation guide.
+
+### Quick Deploy
+
+Deploy the entire system (Frontend + Backend + Dashboard) with Docker:
 
 ```bash
 ./deploy.sh
@@ -24,20 +44,23 @@ For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
 Verify all modules and tests are working correctly:
 
 ```bash
-# Run comprehensive verification (recommended)
-node verify-all-modules.js
+# Comprehensive system health check (NEW!)
+npm run verify:system
 
-# Or using npm
+# Module verification
 npm run verify
+
+# Run all verification checks
+npm run verify:all
 ```
 
 This will:
-- ✅ Display complete directory structure
-- ✅ Count and categorize all files
-- ✅ Discover all test files
-- ✅ Build all modules
-- ✅ Execute all test suites (42 tests)
-- ✅ Generate detailed verification report
+- ✅ Check runtime environment (Node.js, Python, dependencies)
+- ✅ Validate directory structure and core files
+- ✅ Verify all modules are present and importable
+- ✅ Check dependency installation status
+- ✅ Validate configuration files
+- ✅ Generate detailed health report
 
 **Test Coverage:**
 - **Backend API:** 22 tests (15 unit + 7 feature scenarios)
@@ -711,10 +734,62 @@ jobs:
 
 ---
 
+## 📚 Complete Documentation
+
+### Getting Started Guides
+- **[INSTALL.md](INSTALL.md)** - 🌟 **START HERE** - Complete one-click installation guide
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide with common commands
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment with Docker
+
+### Core Documentation
+- **[README.md](README.md)** - This file - System overview and features
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - 🏗️ System architecture and design
+- **[TESTING.md](TESTING.md)** - Testing guide and test suites
+- **[SECURITY.md](SECURITY.md)** - Security best practices and guidelines
+
+### Feature Guides
+- **[WEB3_INTEGRATION.md](WEB3_INTEGRATION.md)** - Web3 wallet and blockchain integration
+- **[QUICKSTART_WEB3.md](QUICKSTART_WEB3.md)** - Web3 quick start
+- **[FLASHLOAN_COMPLETE_GUIDE.md](FLASHLOAN_COMPLETE_GUIDE.md)** - Complete flashloan guide
+- **[FLASHLOAN_INTEGRATION.md](FLASHLOAN_INTEGRATION.md)** - Flashloan integration details
+- **[models/DUAL_AI_README.md](models/DUAL_AI_README.md)** - Dual AI ML system documentation
+
+### Development & Contributing
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - 🤝 How to contribute to this project
+- **[VERIFICATION_GUIDE.md](VERIFICATION_GUIDE.md)** - System verification procedures
+- **[docs/README.md](docs/README.md)** - 📖 Complete documentation index
+
+### Implementation Reports
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Overall implementation summary
+- **[MODULE_VERIFICATION_SUMMARY.md](MODULE_VERIFICATION_SUMMARY.md)** - Module verification results
+- **[COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md)** - Project completion summary
+
+---
+
 ## 🤝 Contributing
 
-- PRs for new protocols, chains, analytics, ML models, monitoring, and orchestrator extensions are welcome.
-- Please include tests, documentation, and detailed commit messages.
+We welcome contributions! This project is designed for continuous evolution and rapid innovation.
+
+**Before contributing:**
+- 📖 Read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines
+- 🔍 Check existing [issues](https://github.com/Omni-Tech-Stack/Quant-Arbitrage-System-Hyperspeed-X100-Edition/issues) and PRs
+- 💬 Join discussions about new features and improvements
+
+**Areas for contribution:**
+- 🔌 New DEX and protocol integrations
+- 🧠 ML model improvements and optimization
+- ⚡ Performance enhancements
+- 📝 Documentation and examples
+- 🧪 Testing and quality assurance
+- 🔒 Security improvements
+
+**How to contribute:**
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines.
 
 ---
 
