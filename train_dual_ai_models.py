@@ -195,7 +195,7 @@ def train_models(engine: DualAIMLEngine, data_source: str = 'auto', n_samples: i
     print("=" * 80)
     print()
     print("✓ Models trained and saved successfully")
-    print(f"  - Primary Model: XGBoost ({n_samples} samples)")
+    print(f"  - Primary Model: XGBoost ({len(training_data)} samples)")
     print(f"  - ONNX Model: Optimized for inference")
     print(f"  - Location: {engine.model_dir}")
     print()
