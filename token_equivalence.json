@@ -1,0 +1,6 @@
+{
+  "WETH": ["ETH", "WETH9"],
+  "USDC": ["USDC.e", "USDbC"],
+  "USDT": ["USDT.e"],
+  "WMATIC": ["MATIC", "WMATIC"]
+}

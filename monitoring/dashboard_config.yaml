@@ -1,0 +1,12 @@
+# Dashboard Configuration for Grafana/Prometheus
+dashboards:
+  - name: "Arbitrage System Overview"
+    panels:
+      - title: "Total Profit (24h)"
+        type: "stat"
+      - title: "Success Rate"
+        type: "gauge"
+      - title: "Opportunities Detected"
+        type: "graph"
+      - title: "Gas Costs"
+        type: "graph"
