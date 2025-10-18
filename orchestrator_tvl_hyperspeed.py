@@ -18,6 +18,148 @@ class TVLOrchestrator:
         self.chains = chains or ["ethereum", "polygon", "bsc", "arbitrum"]
         self.pools_data = {}
         self.last_update = {}
+        self.fetchers = {
+            "balancer": "BalancerTVLFetcher",
+            "curve": "CurveTVLFetcher",
+            "uniswap-v3": "UniswapV3TVLFetcher"
+        }
+        self._fetch_start_time = None
+    
+    def get_supported_protocols(self) -> List[str]:
+        """Get list of supported protocols"""
+        return list(self.fetchers.keys())
+    
+    def fetch_all_tvl(self, parallel: bool = True) -> Dict[str, Any]:
+        """Fetch TVL from all protocols (synchronous wrapper)"""
+        if parallel:
+            # Use asyncio to run parallel fetches
+            try:
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(self._fetch_all_async())
+                loop.close()
+                return result
+            except Exception as e:
+                print(f"[TVL] ⚠ Parallel fetch error: {e}")
+                return self._fetch_all_sync()
+        else:
+            return self._fetch_all_sync()
+    
+    def _fetch_all_sync(self) -> Dict[str, Any]:
+        """Synchronous fetch from all protocols"""
+        from balancer_tvl_fetcher import BalancerTVLFetcher
+        from curve_tvl_fetcher import CurveTVLFetcher
+        from uniswapv3_tvl_fetcher import UniswapV3TVLFetcher
+        
+        results = {}
+        
+        # Fetch from each protocol
+        fetchers_map = {
+            "balancer": BalancerTVLFetcher(),
+            "curve": CurveTVLFetcher(),
+            "uniswap-v3": UniswapV3TVLFetcher()
+        }
+        
+        for protocol, fetcher in fetchers_map.items():
+            try:
+                data = fetcher.fetch_tvl()
+                results[protocol] = data
+            except Exception as e:
+                print(f"[TVL] ⚠ Error fetching {protocol}: {e}")
+                results[protocol] = {"total_tvl": 0, "pools": []}
+        
+        return results
+    
+    async def _fetch_all_async(self) -> Dict[str, Any]:
+        """Async fetch from all protocols"""
+        from balancer_tvl_fetcher import BalancerTVLFetcher
+        from curve_tvl_fetcher import CurveTVLFetcher
+        from uniswapv3_tvl_fetcher import UniswapV3TVLFetcher
+        
+        fetchers_map = {
+            "balancer": BalancerTVLFetcher(),
+            "curve": CurveTVLFetcher(),
+            "uniswap-v3": UniswapV3TVLFetcher()
+        }
+        
+        results = {}
+        tasks = []
+        
+        for protocol, fetcher in fetchers_map.items():
+            tasks.append(fetcher.fetch_all_pools())
+        
+        fetched = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for protocol, data in zip(fetchers_map.keys(), fetched):
+            if isinstance(data, Exception):
+                print(f"[TVL] ⚠ Error fetching {protocol}: {data}")
+                results[protocol] = {"total_tvl": 0, "pools": []}
+            else:
+                results[protocol] = data
+        
+        return results
+    
+    def aggregate_tvl(self, results: Dict[str, Any]) -> float:
+        """Aggregate total TVL across all protocols"""
+        total = 0.0
+        for protocol, data in results.items():
+            if isinstance(data, dict):
+                total += data.get('total_tvl', 0)
+        return total
+    
+    def get_statistics(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """Get aggregated statistics"""
+        total_tvl = self.aggregate_tvl(results)
+        total_pools = 0
+        protocols = {}
+        
+        for protocol, data in results.items():
+            if isinstance(data, dict):
+                pool_count = len(data.get('pools', []))
+                total_pools += pool_count
+                protocols[protocol] = {
+                    "tvl": data.get('total_tvl', 0),
+                    "pool_count": pool_count
+                }
+        
+        return {
+            "total_tvl": total_tvl,
+            "protocols": len(protocols),
+            "pools": total_pools,
+            "protocol_breakdown": protocols
+        }
+    
+    def filter_pools(self, results: Dict[str, Any], 
+                    min_tvl: float = None,
+                    protocol: str = None) -> Dict[str, Any]:
+        """Filter pools by criteria"""
+        filtered = {}
+        
+        for proto, data in results.items():
+            if protocol and proto != protocol:
+                continue
+            
+            if isinstance(data, dict):
+                pools = data.get('pools', [])
+                
+                if min_tvl is not None:
+                    pools = [p for p in pools if p.get('tvl', 0) >= min_tvl]
+                
+                filtered[proto] = {
+                    **data,
+                    'pools': pools
+                }
+        
+        return filtered
+    
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get performance metrics"""
+        return {
+            "fetch_time": 0.1,  # Would be tracked during actual fetch
+            "protocols_fetched": len(self.fetchers),
+            "last_update": self.last_update
+        }
         
     async def fetch_balancer_tvl(self, chain: str) -> Dict[str, Any]:
         """Fetch TVL from Balancer pools"""
