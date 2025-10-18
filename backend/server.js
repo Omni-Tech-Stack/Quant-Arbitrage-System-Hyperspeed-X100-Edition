@@ -16,12 +16,28 @@ const walletManager = new WalletManager();
 const blockchainConnector = new BlockchainConnector();
 let web3Utils = null;
 
-// Middleware - CORS configured to allow all origins (no firewall restrictions)
+// Middleware - CORS configured to allow only specified origins via environment variable
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [];
+
 app.use(cors({
-  origin: '*', // Allow all origins
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) {
+      // No origins allowed if env var is not set
+      return callback(new Error('CORS not allowed from this origin'), false);
+    }
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('CORS not allowed from this origin'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: false, // Set to false when origin is '*'
+  credentials: true, // Set to true if you want to allow cookies/credentials
   optionsSuccessStatus: 200
 }));
 app.use(express.json());
