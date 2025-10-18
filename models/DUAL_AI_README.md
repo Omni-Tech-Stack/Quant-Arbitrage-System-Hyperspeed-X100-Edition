@@ -247,10 +247,7 @@ The system supports continuous learning through:
 ## Security
 
 ### ONNX Version
-- Using ONNX >= 1.17.0 to address security vulnerabilities
-- CVE-2024-XXXXX: Path traversal vulnerability fixed
-- CVE-2024-YYYYY: Arbitrary file overwrite fixed
-
+- Using ONNX >= 1.17.0 to address security vulnerabilities, including fixes for path traversal and arbitrary file overwrite issues
 ### Model Security
 - Models stored locally, no external dependencies
 - No network calls during inference
