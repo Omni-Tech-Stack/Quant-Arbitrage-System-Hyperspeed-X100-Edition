@@ -100,7 +100,6 @@ setInterval(() => {
 }, 300000); // Clean up every 5 minutes
 
 // Middleware
-app.use(cors());
 // Middleware - CORS configured to allow only specified origins via environment variable
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
