@@ -13,7 +13,7 @@ const {
   calculateMarketImpact,
   calculateMultihopSlippage,
   simulateParallelFlashloanPaths
-} = require('../ultra-fast-arbitrage-engine/dist/index.js');
+} = require(path.resolve(__dirname, '../ultra-fast-arbitrage-engine/dist/index.js'));
 
 const app = express();
 const server = http.createServer(app);

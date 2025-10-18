@@ -35,6 +35,19 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+      
+      - name: Build dependencies
+        run: |
+          cd ultra-fast-arbitrage-engine
+          npm install
+          npm run build:rust
+          npm run build
+          cd ..
+      
       - name: Install dependencies
         run: |
           cd backend
