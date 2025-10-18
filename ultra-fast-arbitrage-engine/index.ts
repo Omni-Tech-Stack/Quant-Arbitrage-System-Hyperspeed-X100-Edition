@@ -1,11 +1,267 @@
 /**
  * SYMEN-MAX Ultra-Fast Arbitrage Engine
- * TypeScript interface for native Rust math engine
+ * TypeScript interface for native Rust math engine with JavaScript fallbacks
  */
 
 import * as path from 'path';
 
-const native = require(path.join(__dirname, '..', 'native', 'math_engine.node'));
+// Try to load native module, fall back to JS implementation if not available
+let native: any = null;
+try {
+  native = require(path.join(__dirname, '..', 'native', 'math_engine.node'));
+} catch (e) {
+  console.warn('[Ultra-Fast Engine] Native Rust module not available, using JavaScript fallbacks');
+}
+
+// JavaScript fallback implementations
+const jsFallbacks = {
+  computeUniswapV2Slippage(reserveIn: number, reserveOut: number, amountIn: number): number {
+    if (amountIn === 0) return 0;
+    const k = reserveIn * reserveOut;
+    const newReserveIn = reserveIn + amountIn * 0.997; // 0.3% fee
+    const newReserveOut = k / newReserveIn;
+    const amountOut = reserveOut - newReserveOut;
+    const idealAmountOut = (amountIn * reserveOut) / reserveIn;
+    return ((idealAmountOut - amountOut) / idealAmountOut) * 100;
+  },
+  
+  computeUniswapV3Slippage(liquidity: number, sqrtPrice: number, amountIn: number): number {
+    // Simplified V3 slippage calculation
+    return (amountIn / (liquidity * sqrtPrice)) * 100;
+  },
+  
+  computeCurveSlippage(balanceIn: number, balanceOut: number, amountIn: number, amplification: number): number {
+    // Simplified Curve slippage
+    const totalBalance = balanceIn + balanceOut;
+    return (amountIn / totalBalance) * (100 / amplification);
+  },
+  
+  computeBalancerSlippage(balanceIn: number, balanceOut: number, weightIn: number, weightOut: number, amountIn: number): number {
+    // Balancer weighted pool formula
+    const spotPrice = (balanceIn / weightIn) / (balanceOut / weightOut);
+    const effectivePrice = ((balanceIn + amountIn) / weightIn) / (balanceOut / weightOut);
+    return ((effectivePrice - spotPrice) / spotPrice) * 100;
+  },
+  
+  computeAggregatorSlippage(slippages: number[]): number {
+    return Math.min(...slippages);
+  },
+  
+  optimalTradeSize(reserveIn: number, reserveOut: number, gasCost: number, minProfit: number): number {
+    // For a constant product AMM (x * y = k), the optimal trade maximizes profit
+    // Binary search for optimal amount considering gas and minProfit
+    let low = 0;
+    let high = reserveIn * 0.09; // Max 9% of reserve for safety margin
+    let best = 0;
+    let bestProfit = -Infinity;
+    
+    for (let i = 0; i < 30; i++) {
+      const mid = (low + high) / 2;
+      if (mid === 0) break;
+      
+      const amountOut = (reserveOut * mid * 997) / (reserveIn * 1000 + mid * 997);
+      const profit = amountOut - mid - gasCost;
+      
+      if (profit > bestProfit) {
+        bestProfit = profit;
+        best = mid;
+      }
+      
+      // Adjust search range
+      if (i < 29) {
+        const midPlus = mid * 1.01;
+        const amountOutPlus = (reserveOut * midPlus * 997) / (reserveIn * 1000 + midPlus * 997);
+        const profitPlus = amountOutPlus - midPlus - gasCost;
+        
+        if (profitPlus > profit) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+    }
+    
+    return bestProfit >= minProfit ? best : 0;
+  },
+  
+  calculateFlashloanAmount(reserveInBuy: number, reserveOutBuy: number, reserveInSell: number, reserveOutSell: number, flashloanFee: number, gasCost: number): number {
+    // Binary search for optimal amount
+    let low = 0;
+    let high = Math.min(reserveInBuy, reserveInSell) * 0.3; // Max 30% of pool
+    let best = 0;
+    let bestProfit = 0;
+    
+    for (let i = 0; i < 50; i++) {
+      const mid = (low + high) / 2;
+      const amountOut = (reserveOutBuy * mid * 997) / (reserveInBuy * 1000 + mid * 997);
+      const finalOut = (reserveOutSell * amountOut * 997) / (reserveInSell * 1000 + amountOut * 997);
+      const profit = finalOut - mid - (mid * flashloanFee) - gasCost;
+      
+      if (profit > bestProfit) {
+        bestProfit = profit;
+        best = mid;
+      }
+      
+      if (profit > 0) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    
+    return bestProfit > 0 ? best : 0;
+  },
+  
+  calculateMarketImpact(reserveIn: number, reserveOut: number, flashloanAmount: number): number {
+    const priceBefore = reserveOut / reserveIn;
+    const newReserveIn = reserveIn + flashloanAmount;
+    const newReserveOut = (reserveIn * reserveOut) / newReserveIn;
+    const priceAfter = newReserveOut / newReserveIn;
+    return ((priceBefore - priceAfter) / priceBefore) * 100;
+  },
+  
+  calculateMultihopSlippage(reserves: number[][], flashloanAmount: number): number {
+    let currentAmount = flashloanAmount;
+    let totalSlippage = 0;
+    
+    for (const [reserveIn, reserveOut] of reserves) {
+      const slippage = this.computeUniswapV2Slippage(reserveIn, reserveOut, currentAmount);
+      totalSlippage += slippage;
+      const amountOut = (reserveOut * currentAmount * 997) / (reserveIn * 1000 + currentAmount * 997);
+      currentAmount = amountOut;
+    }
+    
+    return totalSlippage;
+  },
+  
+  simulateParallelFlashloanPaths(paths: number[][][], flashloanAmounts: number[], flashloanFee: number, gasCosts: number[]): number[][] {
+    return paths.map((path, idx) => {
+      let currentAmount = flashloanAmounts[idx];
+      let totalSlippage = 0;
+      
+      for (const [reserveIn, reserveOut] of path) {
+        const amountOut = (reserveOut * currentAmount * 997) / (reserveIn * 1000 + currentAmount * 997);
+        const slippage = this.computeUniswapV2Slippage(reserveIn, reserveOut, currentAmount);
+        totalSlippage += slippage;
+        currentAmount = amountOut;
+      }
+      
+      const profit = currentAmount - flashloanAmounts[idx] * (1 + flashloanFee) - gasCosts[idx];
+      return [profit, totalSlippage, idx];
+    });
+  },
+  
+  calculateFlashloanAmountV3(liquidity: number, sqrtPriceBuy: number, sqrtPriceSell: number, flashloanFee: number, gasCost: number): number {
+    // Simplified V3 calculation
+    return liquidity * (sqrtPriceSell - sqrtPriceBuy) / sqrtPriceBuy;
+  },
+  
+  calculatePoolPrice(reserveIn: number, reserveOut: number): number {
+    return reserveOut / reserveIn;
+  },
+  
+  identifyArbitrageOpportunity(pool1ReserveIn: number, pool1ReserveOut: number, pool2ReserveIn: number, pool2ReserveOut: number, minPriceDiffPct: number): number[] {
+    const price1 = pool1ReserveOut / pool1ReserveIn;
+    const price2 = pool2ReserveOut / pool2ReserveIn;
+    const priceDiff = Math.abs(price1 - price2) / Math.min(price1, price2) * 100;
+    
+    if (priceDiff < minPriceDiffPct) {
+      return [0, 0, 0];
+    }
+    
+    const direction = price1 < price2 ? 1 : 2;
+    return [1, priceDiff, direction];
+  },
+  
+  calculateAmountIn(reserveIn: number, reserveOut: number, amountOut: number): number {
+    return ((reserveIn * amountOut * 1000) / ((reserveOut - amountOut) * 997)) + 1;
+  },
+  
+  calculateAmountOut(reserveIn: number, reserveOut: number, amountIn: number): number {
+    return (reserveOut * amountIn * 997) / (reserveIn * 1000 + amountIn * 997);
+  },
+  
+  estimateArbitrageProfit(buyReserveIn: number, buyReserveOut: number, sellReserveIn: number, sellReserveOut: number, amountIn: number, gasCost: number, flashloanFeePct: number): number {
+    const amountOut = this.calculateAmountOut(buyReserveIn, buyReserveOut, amountIn);
+    const finalOut = this.calculateAmountOut(sellReserveIn, sellReserveOut, amountOut);
+    return finalOut - amountIn - gasCost - (amountIn * flashloanFeePct);
+  },
+  
+  solveQuadratic(a: number, b: number, c: number): number[] {
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) return [0, 0];
+    const sqrtDisc = Math.sqrt(discriminant);
+    return [(-b + sqrtDisc) / (2 * a), (-b - sqrtDisc) / (2 * a)];
+  },
+  
+  optimizeTradeSizeQuadratic(buyReserveIn: number, buyReserveOut: number, sellReserveIn: number, sellReserveOut: number, gasCost: number, flashloanFeePct: number): number {
+    // Simplified optimization using binary search
+    let best = 0;
+    let bestProfit = -Infinity;
+    const maxAmount = Math.min(buyReserveIn, sellReserveIn) * 0.3;
+    
+    for (let i = 0; i <= 100; i++) {
+      const amount = (i / 100) * maxAmount;
+      const profit = this.estimateArbitrageProfit(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, amount, gasCost, flashloanFeePct);
+      if (profit > bestProfit) {
+        bestProfit = profit;
+        best = amount;
+      }
+    }
+    
+    return best;
+  },
+  
+  calculateTwap(priceSamples: number[][]): number {
+    if (priceSamples.length < 2) return 0;
+    let sum = 0;
+    let totalTime = 0;
+    for (let i = 1; i < priceSamples.length; i++) {
+      const dt = priceSamples[i][0] - priceSamples[i-1][0];
+      sum += priceSamples[i][1] * dt;
+      totalTime += dt;
+    }
+    return totalTime > 0 ? sum / totalTime : 0;
+  },
+  
+  validateWithTwap(currentPrice: number, twap: number, maxDeviationPct: number): boolean {
+    const deviation = Math.abs(currentPrice - twap) / twap * 100;
+    return deviation <= maxDeviationPct;
+  },
+  
+  executeArbitrageFlow(pool1ReserveIn: number, pool1ReserveOut: number, pool2ReserveIn: number, pool2ReserveOut: number, priceSamplesPool1: number[][], priceSamplesPool2: number[][], config: any): number[] {
+    // Step 1: Identify opportunity
+    const opportunity = this.identifyArbitrageOpportunity(pool1ReserveIn, pool1ReserveOut, pool2ReserveIn, pool2ReserveOut, config.minPriceDiffPct);
+    if (opportunity[0] === 0) return [0, 0, 0];
+    
+    // Step 2: Calculate optimal amount
+    const [buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut] = opportunity[2] === 1
+      ? [pool1ReserveIn, pool1ReserveOut, pool2ReserveIn, pool2ReserveOut]
+      : [pool2ReserveIn, pool2ReserveOut, pool1ReserveIn, pool1ReserveOut];
+    
+    const optimalAmount = this.optimizeTradeSizeQuadratic(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, config.gasCost, config.flashloanFeePct);
+    
+    // Step 3: Estimate profit
+    const profit = this.estimateArbitrageProfit(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, optimalAmount, config.gasCost, config.flashloanFeePct);
+    
+    // Step 4: Validate with TWAP
+    const twap1 = this.calculateTwap(priceSamplesPool1);
+    const twap2 = this.calculateTwap(priceSamplesPool2);
+    const currentPrice1 = this.calculatePoolPrice(pool1ReserveIn, pool1ReserveOut);
+    const currentPrice2 = this.calculatePoolPrice(pool2ReserveIn, pool2ReserveOut);
+    const valid1 = this.validateWithTwap(currentPrice1, twap1, config.maxTwapDeviationPct);
+    const valid2 = this.validateWithTwap(currentPrice2, twap2, config.maxTwapDeviationPct);
+    
+    // Step 5: Make decision
+    const shouldExecute = valid1 && valid2 && profit >= config.minProfitThreshold ? 1 : 0;
+    return [shouldExecute, optimalAmount, profit];
+  }
+};
+
+// Use native module if available, otherwise use JS fallbacks
+if (!native) {
+  native = jsFallbacks;
+}
 
 /**
  * Compute slippage for Uniswap V2 style constant product pools

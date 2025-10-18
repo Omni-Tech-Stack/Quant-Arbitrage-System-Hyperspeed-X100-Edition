@@ -4,7 +4,24 @@
 
 ## 🎯 One-Click Deployment
 
-Deploy the entire system (Frontend + Backend + Dashboard) with a single command:
+### Windows Users 🪟
+
+**ONE-CLICK INSTALL AND RUN:**
+```
+Double-click: install-and-run.bat
+```
+
+This will automatically:
+- ✅ Install all dependencies
+- ✅ Build the system
+- ✅ Start all services
+- ✅ Open the dashboard
+
+**See [WINDOWS_QUICKSTART.md](WINDOWS_QUICKSTART.md) for complete Windows guide**
+
+### Linux/macOS Users 🐧🍎
+
+Deploy the entire system with a single command:
 
 ```bash
 ./deploy.sh
