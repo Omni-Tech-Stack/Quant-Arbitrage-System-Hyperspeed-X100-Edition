@@ -99,7 +99,7 @@ app.post('/api/calculate-flashloan', (req, res) => {
       reserveOutBuy,
       reserveInSell,
       reserveOutSell,
-      flashloanFee = 0.0009, // Default to Aave fee (0.09%)
+      flashloanFee = 0.0009, // Default to Aave flashloan fee (0.09%)
       gasCost = 100
     } = req.body;
 
