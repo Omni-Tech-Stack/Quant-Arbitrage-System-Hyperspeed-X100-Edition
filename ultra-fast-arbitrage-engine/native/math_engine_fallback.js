@@ -187,10 +187,15 @@ function solveQuadratic(a, b, c) {
 }
 
 // Optimize Trade Size using Quadratic
+
+// Binary search bounds for optimizeTradeSizeQuadratic
+const BINARY_SEARCH_INITIAL_LOW = 100;
+const BINARY_SEARCH_INITIAL_HIGH_FACTOR = 0.1;
+
 function optimizeTradeSizeQuadratic(buyReserveIn, buyReserveOut, sellReserveIn, sellReserveOut, gasCost, flashloanFeePct) {
   // Simplified: use binary search for optimal amount
-  let low = 100;
-  let high = Math.min(buyReserveIn, sellReserveIn) * 0.1;
+  let low = BINARY_SEARCH_INITIAL_LOW;
+  let high = Math.min(buyReserveIn, sellReserveIn) * BINARY_SEARCH_INITIAL_HIGH_FACTOR;
   let bestAmount = 0;
   let bestProfit = -Infinity;
   
