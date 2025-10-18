@@ -170,7 +170,7 @@ check_python_modules() {
     
     # Check if Python modules can be imported
     check_info "Checking Python module imports..."
-    python3 -c "import sys; sys.path.insert(0, '.'); import config.config" 2>/dev/null && check_pass "config module importable" || check_warn "config module import issues"
+    python3 -c "import sys; sys.path.insert(0, '.'); import config.config" 2>/dev/null && check_pass "config module importable" || check_warn "config module cannot be imported - verify config/config.py exists and has no syntax errors"
 }
 
 check_javascript_modules() {
