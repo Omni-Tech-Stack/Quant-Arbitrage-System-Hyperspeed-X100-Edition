@@ -16,8 +16,30 @@ const walletManager = new WalletManager();
 const blockchainConnector = new BlockchainConnector();
 let web3Utils = null;
 
-// Middleware
-app.use(cors());
+// Middleware - CORS configured to allow only specified origins via environment variable
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) {
+      // No origins allowed if env var is not set
+      return callback(new Error('CORS not allowed from this origin'), false);
+    }
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('CORS not allowed from this origin'), false);
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true, // Set to true if you want to allow cookies/credentials
+  optionsSuccessStatus: 200
+}));
 app.use(express.json());
 
 // Store for arbitrage data
@@ -1011,8 +1033,10 @@ if (process.env.DEMO_MODE === 'true') {
 }
 
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0'; // Bind to all network interfaces
 
-server.listen(PORT, () => {
-  console.log(`Backend API server running on port ${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Backend API server running on ${HOST}:${PORT}`);
   console.log(`WebSocket server ready for real-time updates`);
+  console.log(`CORS: Accepting requests from all origins (no firewall restrictions)`);
 });
