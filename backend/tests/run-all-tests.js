@@ -80,8 +80,8 @@ async function ensureServerRunning() {
   });
   
   serverProcess.stdout.on('data', (data) => {
-    // Suppress server logs during tests
-    if (process.env.VERBOSE) {
+    // Show server logs in VERBOSE mode or in CI for debugging
+    if (process.env.VERBOSE || process.env.CI) {
       console.log(`[Server] ${data.toString().trim()}`);
     }
   });
