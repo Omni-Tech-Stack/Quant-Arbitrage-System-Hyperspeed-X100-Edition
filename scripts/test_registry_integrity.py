@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Test pool registry integrity"""
 import sys
-sys.path.insert(0, '..')
+import os
+
+# Add parent to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def main():
     print("=" * 80)
@@ -10,7 +13,7 @@ def main():
     
     try:
         from pool_registry_integrator import PoolRegistryIntegrator
-        registry = PoolRegistryIntegrator("pool_registry.json")
+        registry = PoolRegistryIntegrator("pool_registry.json", "token_equivalence.json")
         stats = registry.get_statistics()
         
         print(f"\n✓ Registry loaded successfully")
@@ -18,8 +21,11 @@ def main():
         print(f"✓ Active chains: {stats['active_chains']}")
         print(f"✓ Tokens: {stats['tokens']}")
         print("\n✅ Registry integrity verified!")
+        return 0
     except Exception as e:
-        print(f"\n⚠ Registry test: {e}")
+        print(f"\n⚠ Registry test failed: {e}")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
+

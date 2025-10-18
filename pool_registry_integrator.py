@@ -210,6 +210,61 @@ class PoolRegistryIntegrator:
         self._load_registry()
         self.graph.clear()
         self._build_graph()
+    
+    def add_pool(self, pool: Dict[str, Any]):
+        """Dynamically add a new pool to the registry"""
+        self.pools.append(pool)
+        
+        # Update graph
+        token0 = pool.get('token0')
+        token1 = pool.get('token1')
+        
+        if token0 and token1:
+            self.graph[token0].append((token1, pool))
+            self.graph[token1].append((token0, pool))
+        
+        # Update chain if needed
+        chain = pool.get('chain')
+        if chain:
+            self.active_chains.add(chain)
+        
+        self.last_update = time.time()
+    
+    def find_pools_by_pair(self, token0: str, token1: str) -> List[Dict[str, Any]]:
+        """Find all pools for a specific token pair"""
+        matching_pools = []
+        
+        for pool in self.pools:
+            pool_token0 = pool.get('token0')
+            pool_token1 = pool.get('token1')
+            
+            # Check both directions
+            if (pool_token0 == token0 and pool_token1 == token1) or \
+               (pool_token0 == token1 and pool_token1 == token0):
+                matching_pools.append(pool)
+        
+        return matching_pools
+    
+    def filter_pools(self, chain: Optional[str] = None, 
+                    dex: Optional[str] = None,
+                    min_tvl: Optional[float] = None,
+                    min_liquidity: Optional[float] = None) -> List[Dict[str, Any]]:
+        """Filter pools by various criteria"""
+        filtered = self.pools
+        
+        if chain:
+            filtered = [p for p in filtered if p.get('chain') == chain]
+        
+        if dex:
+            filtered = [p for p in filtered if p.get('dex') == dex]
+        
+        if min_tvl is not None:
+            filtered = [p for p in filtered if p.get('tvl', 0) >= min_tvl]
+        
+        if min_liquidity is not None:
+            filtered = [p for p in filtered if p.get('liquidity', 0) >= min_liquidity]
+        
+        return filtered
 
 
 def main():
