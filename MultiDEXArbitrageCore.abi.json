@@ -1,0 +1,13 @@
+[
+  {
+    "inputs": [
+      {"name": "path", "type": "address[]"},
+      {"name": "amounts", "type": "uint256[]"},
+      {"name": "routers", "type": "address[]"}
+    ],
+    "name": "executeArbitrage",
+    "outputs": [{"name": "profit", "type": "uint256"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

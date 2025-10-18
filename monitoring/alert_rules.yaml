@@ -1,0 +1,11 @@
+# Alert Rules
+alerts:
+  - name: "HighErrorRate"
+    condition: "error_rate > 5%"
+    action: "notify_slack"
+  - name: "LowProfitability"
+    condition: "profit_24h < $100"
+    action: "notify_email"
+  - name: "HighGasPrice"
+    condition: "gas_price > 150 gwei"
+    action: "pause_trading"
