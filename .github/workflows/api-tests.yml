@@ -51,7 +51,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-results-1760680760093.json
+          name: unit-test-results-node-${{ matrix.node-version }}
           path: backend/test-results/unit-test-results-1760680760093.json
           retention-days: 30
       
@@ -125,16 +125,16 @@ jobs:
           echo "## Test Results by Node Version" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          for dir in all-test-results/test-results-node-*; do
+          for dir in all-test-results/unit-test-results-node-*; do
             if [ -d "$dir" ]; then
-              NODE_VERSION=$(basename "$dir" | sed 's/test-results-node-//')
+              NODE_VERSION=$(basename "$dir" | sed 's/unit-test-results-node-//')
               echo "### Node $NODE_VERSION" >> $GITHUB_STEP_SUMMARY
               
-              if [ -f "$dir/comprehensive-report.json" ]; then
+              if [ -f "$dir/unit-test-results-1760680760093.json" ]; then
                 # Extract summary information
-                TOTAL=$(cat "$dir/comprehensive-report.json" | grep -o '"total":[0-9]*' | head -1 | cut -d':' -f2)
-                PASSED=$(cat "$dir/comprehensive-report.json" | grep -o '"passed":[0-9]*' | head -1 | cut -d':' -f2)
-                FAILED=$(cat "$dir/comprehensive-report.json" | grep -o '"failed":[0-9]*' | head -1 | cut -d':' -f2)
+                TOTAL=$(cat "$dir/unit-test-results-1760680760093.json" | grep -o '"total":[0-9]*' | head -1 | cut -d':' -f2)
+                PASSED=$(cat "$dir/unit-test-results-1760680760093.json" | grep -o '"passed":[0-9]*' | head -1 | cut -d':' -f2)
+                FAILED=$(cat "$dir/unit-test-results-1760680760093.json" | grep -o '"failed":[0-9]*' | head -1 | cut -d':' -f2)
                 
                 echo "- Total: $TOTAL" >> $GITHUB_STEP_SUMMARY
                 echo "- Passed: $PASSED ✅" >> $GITHUB_STEP_SUMMARY
