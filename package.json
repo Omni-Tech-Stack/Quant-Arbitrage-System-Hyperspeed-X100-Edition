@@ -2,9 +2,14 @@
   "name": "quant-arbitrage-system-hyperspeed-x100",
   "version": "1.0.0",
   "description": "Quant Arbitrage System: Hyperspeed X100 Edition - Full-stack arbitrage trading system",
+  "workspaces": [
+    "backend",
+    "frontend",
+    "ultra-fast-arbitrage-engine"
+  ],
   "scripts": {
     "setup": "./setup.sh",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ../ultra-fast-arbitrage-engine && npm install && cd ..",
+    "install:all": "npm install",
     "verify": "node verify-all-modules.js",
     "verify:system": "./verify-system.sh",
     "verify:backend": "cd backend && npm test",
