@@ -40,6 +40,13 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# ML Model files (generated, not committed)
+models/*.pkl
+models/*.onnx
+models/trade_log.jsonl
+models/training_metadata.json
+
 # Wallet files (contain sensitive data)
 backend/wallets/
 

@@ -9,12 +9,18 @@
 # eth-utils>=2.2.0
 
 # Data processing
-# pandas>=2.0.0
-# numpy>=1.24.0
+pandas>=2.0.0
+numpy>=1.24.0
 
 # Machine learning
-# scikit-learn>=1.3.0
-# joblib>=1.3.0
+scikit-learn>=1.3.0
+joblib>=1.3.0
+xgboost>=2.0.0
+
+# ONNX for dual AI system
+onnx>=1.17.0
+onnxruntime>=1.16.0
+skl2onnx>=1.16.0
 
 # Async and networking
 # aiohttp>=3.8.0
