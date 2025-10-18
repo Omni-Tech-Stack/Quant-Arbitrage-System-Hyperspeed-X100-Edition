@@ -2,9 +2,29 @@
 
 ---
 
-## 🎯 One-Click Deployment
+## ⚡ ONE-CLICK INSTALLATION & DEPLOYMENT
 
-Deploy the entire system (Frontend + Backend + Dashboard) with a single command:
+### Quick Install (New!)
+
+Install the entire unified system with a single command:
+
+```bash
+./setup.sh
+```
+
+This will:
+- ✅ Check all prerequisites
+- ✅ Install ALL dependencies (Node.js + Python)
+- ✅ Build ALL modules (Backend, Frontend, Engine)
+- ✅ Set up directory structure
+- ✅ Verify installation
+- ✅ Display next steps
+
+**First time?** See [INSTALL.md](INSTALL.md) for the complete installation guide.
+
+### Quick Deploy
+
+Deploy the entire system (Frontend + Backend + Dashboard) with Docker:
 
 ```bash
 ./deploy.sh
@@ -24,20 +44,23 @@ For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
 Verify all modules and tests are working correctly:
 
 ```bash
-# Run comprehensive verification (recommended)
-node verify-all-modules.js
+# Comprehensive system health check (NEW!)
+npm run verify:system
 
-# Or using npm
+# Module verification
 npm run verify
+
+# Run all verification checks
+npm run verify:all
 ```
 
 This will:
-- ✅ Display complete directory structure
-- ✅ Count and categorize all files
-- ✅ Discover all test files
-- ✅ Build all modules
-- ✅ Execute all test suites (42 tests)
-- ✅ Generate detailed verification report
+- ✅ Check runtime environment (Node.js, Python, dependencies)
+- ✅ Validate directory structure and core files
+- ✅ Verify all modules are present and importable
+- ✅ Check dependency installation status
+- ✅ Validate configuration files
+- ✅ Generate detailed health report
 
 **Test Coverage:**
 - **Backend API:** 22 tests (15 unit + 7 feature scenarios)
