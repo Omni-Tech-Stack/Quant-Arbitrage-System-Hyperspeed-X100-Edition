@@ -8,7 +8,7 @@ Includes kill switch, emergency pause, and automatic cooldown
 import time
 from datetime import datetime, timedelta
 from collections import deque
-from config.safety_limits import *
+from config.safety_limits import EMERGENCY_SHUTDOWN, TRADING_PAUSED, CIRCUIT_BREAKER_COOLDOWN_SECONDS
 
 class CircuitBreaker:
     """
