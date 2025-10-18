@@ -5,10 +5,8 @@
 const axios = require('axios');
 const { spawn } = require('child_process');
 const path = require('path');
-const net = require('net');
 
 const API_BASE = 'http://localhost:3001';
-const PORT = 3001;
 let serverProcess = null;
 
 // Test results
@@ -39,58 +37,6 @@ async function test(category, name, fn) {
   }
 }
 
-// Port probe function to ensure server is ready
-function checkPort(port, host = 'localhost') {
-  return new Promise((resolve) => {
-    const socket = new net.Socket();
-    
-    socket.setTimeout(1000);
-    socket.once('connect', () => {
-      socket.destroy();
-      resolve(true);
-    });
-    
-    socket.once('timeout', () => {
-      socket.destroy();
-      resolve(false);
-    });
-    
-    socket.once('error', () => {
-      socket.destroy();
-      resolve(false);
-    });
-    
-    socket.connect(port, host);
-  });
-}
-
-// Wait for server to be ready with port probing
-async function waitForServer(maxAttempts = 30, delayMs = 500) {
-  console.log(`Waiting for server on port ${PORT}...`);
-  
-  for (let i = 0; i < maxAttempts; i++) {
-    const isOpen = await checkPort(PORT);
-    if (isOpen) {
-      // Port is open, now verify health endpoint
-      try {
-        const response = await axios.get(`${API_BASE}/api/health`, { timeout: 2000 });
-        if (response.data.status === 'ok') {
-          console.log('✓ Server is ready');
-          return true;
-        }
-      } catch (error) {
-        // Health check failed, continue waiting
-      }
-    }
-    
-    if (i < maxAttempts - 1) {
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    }
-  }
-  
-  return false;
-}
-
 // Start server
 async function startServer() {
   console.log('Starting server for testing...');
@@ -98,72 +44,47 @@ async function startServer() {
   return new Promise((resolve, reject) => {
     serverProcess = spawn(process.execPath, ['server.js'], {
       cwd: path.join(__dirname, '..'),
-      stdio: ['ignore', 'pipe', 'pipe']  // Pipe stdout and stderr for visibility
+      stdio: 'pipe'
     });
 
-    let serverOutput = '';
-    let resolved = false;
-    
     serverProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      serverOutput += output;
-      
-      // Show output in CI for debugging
-      if (process.env.CI) {
-        console.log('[Server]', output.trim());
-      }
-      
-      if (output.includes('running on port') && !resolved) {
-        resolved = true;
-        // Use port probing to ensure server is truly ready
-        waitForServer().then((ready) => {
-          if (ready) {
-            resolve();
-          } else {
-            reject(new Error('Server started but health check failed'));
-          }
-        }).catch(reject);
+      if (data.toString().includes('running on port')) {
+        setTimeout(resolve, 1000); // Give it a second to fully initialize
       }
     });
 
     serverProcess.stderr.on('data', (data) => {
-      const error = data.toString();
-      console.error('[Server Error]', error.trim());
+      console.error('Server error:', data.toString());
     });
 
-    serverProcess.on('error', (error) => {
-      if (!resolved) {
-        resolved = true;
-        reject(new Error(`Failed to start server: ${error.message}`));
-      }
-    });
-
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        if (serverOutput) {
-          console.log('Server output so far:', serverOutput);
-        }
-        reject(new Error('Server startup timeout after 10 seconds'));
-      }
-    }, 10000);
+    setTimeout(() => reject(new Error('Server startup timeout')), 10000);
   });
 }
 
 // Stop server
 function stopServer() {
   if (serverProcess) {
-    console.log('Stopping server...');
-    serverProcess.kill('SIGTERM');
-    
-    // Give process time to clean up, then force kill if needed
-    setTimeout(() => {
-      if (serverProcess && !serverProcess.killed) {
-        console.log('Force killing server process...');
-        serverProcess.kill('SIGKILL');
+    // Send SIGTERM first, then SIGKILL after timeout if still running
+    let killed = false;
+    const proc = serverProcess;
+    const killTimeout = setTimeout(() => {
+      if (!killed && proc.exitCode === null) {
+        try {
+          proc.kill('SIGKILL');
+        } catch (e) {
+          // Ignore if already dead
+        }
       }
-    }, 2000);
-    
+    }, 5000);
+    proc.once('exit', () => {
+      killed = true;
+      clearTimeout(killTimeout);
+    });
+    try {
+      proc.kill('SIGTERM');
+    } catch (e) {
+      // Ignore if already dead
+    }
     serverProcess = null;
   }
 }
@@ -689,9 +610,6 @@ async function runAllTests() {
 
   } catch (error) {
     console.error('Test suite error:', error.message);
-    if (error.stack) {
-      console.error(error.stack);
-    }
   } finally {
     stopServer();
     console.log('\n✓ Server stopped\n');
@@ -701,19 +619,6 @@ async function runAllTests() {
 // Run tests
 runAllTests().catch(error => {
   console.error('Fatal error:', error);
-  stopServer();
-  process.exit(1);
-});
-
-// Cleanup on exit signals
-process.on('SIGINT', () => {
-  console.log('\nTest interrupted, cleaning up...');
-  stopServer();
-  process.exit(1);
-});
-
-process.on('SIGTERM', () => {
-  console.log('\nTest terminated, cleaning up...');
   stopServer();
   process.exit(1);
 });

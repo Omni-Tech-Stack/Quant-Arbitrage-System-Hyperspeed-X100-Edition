@@ -3,12 +3,14 @@
     {
       "suiteName": "Unit Tests",
       "success": true,
+      "duration": 215,
       "duration": 219,
       "code": 0
     },
     {
       "suiteName": "Feature/Scenario Tests",
       "success": true,
+      "duration": 200,
       "duration": 203,
       "code": 0
     }
@@ -29,6 +31,10 @@
           "error": null,
           "details": {
             "status": "ok",
+            "uptime": 3.133778662,
+            "timestamp": "2025-10-18T02:06:53.387Z"
+          },
+          "timestamp": "2025-10-18T02:06:53.392Z"
             "uptime": 3.132717282,
             "timestamp": "2025-10-18T19:12:48.610Z"
           },
@@ -43,6 +49,7 @@
             "count": 0,
             "sample": "No opportunities"
           },
+          "timestamp": "2025-10-18T02:06:53.395Z"
           "timestamp": "2025-10-18T19:12:48.618Z"
         },
         {
@@ -53,17 +60,19 @@
           "details": {
             "count": 0
           },
+          "timestamp": "2025-10-18T02:06:53.397Z"
           "timestamp": "2025-10-18T19:12:48.621Z"
         },
         {
           "name": "Get Trades with Limit - GET /api/trades?limit=10",
           "success": true,
-          "duration": 3,
+          "duration": 4,
           "error": null,
           "details": {
             "count": 0,
             "requestedLimit": 10
           },
+          "timestamp": "2025-10-18T02:06:53.401Z"
           "timestamp": "2025-10-18T19:12:48.624Z"
         },
         {
@@ -77,14 +86,16 @@
             "totalProfit": 0,
             "avgSlippage": 0
           },
+          "timestamp": "2025-10-18T02:06:53.403Z"
           "timestamp": "2025-10-18T19:12:48.626Z"
         },
         {
           "name": "Post Opportunity - POST /api/opportunities",
           "success": true,
-          "duration": 9,
+          "duration": 8,
           "error": null,
           "details": {
+            "id": 1760753213410,
             "id": 1760814768634,
             "opportunityData": {
               "pool1": "UniswapV2",
@@ -99,6 +110,7 @@
               "estimatedGas": 180000
             }
           },
+          "timestamp": "2025-10-18T02:06:53.411Z"
           "timestamp": "2025-10-18T19:12:48.635Z"
         },
         {
@@ -107,6 +119,9 @@
           "duration": 3,
           "error": null,
           "details": {
+            "id": 1760753213413,
+            "tradeData": {
+              "opportunityId": 1760753212411,
             "id": 1760814768637,
             "tradeData": {
               "opportunityId": 1760814767635,
@@ -123,6 +138,7 @@
               "executionTime": "1250ms"
             }
           },
+          "timestamp": "2025-10-18T02:06:53.414Z"
           "timestamp": "2025-10-18T19:12:48.638Z"
         },
         {
@@ -134,6 +150,9 @@
             "flashloanAmount": 0,
             "flashloanFee": 0.0009,
             "gasCost": 100,
+            "timestamp": "2025-10-18T02:06:53.415Z"
+          },
+          "timestamp": "2025-10-18T02:06:53.416Z"
             "timestamp": "2025-10-18T19:12:48.639Z"
           },
           "timestamp": "2025-10-18T19:12:48.640Z"
@@ -148,6 +167,9 @@
             "reserveIn": 1000000,
             "reserveOut": 2000000,
             "tradeAmount": 50000,
+            "timestamp": "2025-10-18T02:06:53.418Z"
+          },
+          "timestamp": "2025-10-18T02:06:53.419Z"
             "timestamp": "2025-10-18T19:12:48.642Z"
           },
           "timestamp": "2025-10-18T19:12:48.643Z"
@@ -160,6 +182,9 @@
           "details": {
             "results": [],
             "bestPathIndex": 0,
+            "timestamp": "2025-10-18T02:06:53.421Z"
+          },
+          "timestamp": "2025-10-18T02:06:53.422Z"
             "timestamp": "2025-10-18T19:12:48.644Z"
           },
           "timestamp": "2025-10-18T19:12:48.645Z"
@@ -173,6 +198,7 @@
             "status": 404,
             "message": "Endpoint not found (expected)"
           },
+          "timestamp": "2025-10-18T02:06:53.426Z"
           "timestamp": "2025-10-18T19:12:48.650Z"
         },
         {
@@ -184,17 +210,20 @@
             "accepted": true,
             "message": "API accepts partial data"
           },
+          "timestamp": "2025-10-18T02:06:53.428Z"
           "timestamp": "2025-10-18T19:12:48.652Z"
         },
         {
           "name": "Concurrent Requests - Multiple GET /api/health",
           "success": true,
+          "duration": 18,
           "duration": 19,
           "error": null,
           "details": {
             "requestCount": 10,
             "successCount": 10
           },
+          "timestamp": "2025-10-18T02:06:53.446Z"
           "timestamp": "2025-10-18T19:12:48.671Z"
         },
         {
@@ -203,6 +232,10 @@
           "duration": 3,
           "error": null,
           "details": {
+            "payloadSize": 7369,
+            "accepted": true
+          },
+          "timestamp": "2025-10-18T02:06:53.449Z"
             "payloadSize": 7357,
             "accepted": true
           },
@@ -211,13 +244,17 @@
         {
           "name": "Rapid Sequential Requests - POST opportunities",
           "success": true,
-          "duration": 28,
+          "duration": 27,
           "error": null,
           "details": {
             "requestCount": 20,
-            "totalDuration": 28,
-            "avgPerRequest": "1.40ms"
+            "totalDuration": 27,
+            "avgPerRequest": "1.35ms"
           },
+          "timestamp": "2025-10-18T02:06:53.476Z"
+        }
+      ],
+      "timestamp": "2025-10-18T02:06:53.478Z",
           "timestamp": "2025-10-18T19:12:48.702Z"
         }
       ],
@@ -249,6 +286,7 @@
                 "flashloanAmount": 0,
                 "flashloanFee": 0.0009,
                 "gasCost": 150,
+                "timestamp": "2025-10-18T02:06:53.603Z"
                 "timestamp": "2025-10-18T19:12:48.830Z"
               },
               "success": true
@@ -260,6 +298,7 @@
                 "reserveIn": 1523847.32,
                 "reserveOut": 2847651.89,
                 "tradeAmount": 50000,
+                "timestamp": "2025-10-18T02:06:53.610Z"
                 "timestamp": "2025-10-18T19:12:48.836Z"
               },
               "success": true
@@ -267,6 +306,7 @@
             {
               "name": "Create opportunity",
               "data": {
+                "id": 1760753213612
                 "id": 1760814768839
               },
               "success": true
@@ -274,7 +314,7 @@
             {
               "name": "Execute trade",
               "data": {
-                "id": 1760814768842,
+                "id": 1760753213614,
                 "profit": 238.12
               },
               "success": true
@@ -291,6 +331,9 @@
             }
           ],
           "success": true,
+          "duration": 34,
+          "error": null,
+          "timestamp": "2025-10-18T02:06:53.618Z"
           "duration": 33,
           "error": null,
           "timestamp": "2025-10-18T19:12:48.845Z"
@@ -304,6 +347,7 @@
                 "flashloanAmount": 0,
                 "flashloanFee": 0.0009,
                 "gasCost": 150,
+                "timestamp": "2025-10-18T02:06:53.619Z"
                 "timestamp": "2025-10-18T19:12:48.846Z"
               },
               "success": true
@@ -311,6 +355,7 @@
             {
               "name": "Create unprofitable opportunity",
               "data": {
+                "id": 1760753213621
                 "id": 1760814768848
               },
               "success": true
@@ -318,6 +363,7 @@
             {
               "name": "Record failed trade",
               "data": {
+                "id": 1760753213623
                 "id": 1760814768850
               },
               "success": true
@@ -326,6 +372,7 @@
           "success": true,
           "duration": 6,
           "error": null,
+          "timestamp": "2025-10-18T02:06:53.623Z"
           "timestamp": "2025-10-18T19:12:48.851Z"
         },
         {
@@ -336,6 +383,7 @@
               "data": {
                 "results": [],
                 "bestPathIndex": 0,
+                "timestamp": "2025-10-18T02:06:53.625Z"
                 "timestamp": "2025-10-18T19:12:48.852Z"
               },
               "success": true
@@ -344,6 +392,7 @@
               "name": "Select best path",
               "data": {
                 "pathIndex": 0,
+                "id": 1760753213627
                 "id": 1760814768855
               },
               "success": true
@@ -351,6 +400,7 @@
             {
               "name": "Execute multi-hop trade",
               "data": {
+                "id": 1760753213628,
                 "id": 1760814768857,
                 "hops": 2
               },
@@ -360,6 +410,7 @@
           "success": true,
           "duration": 6,
           "error": null,
+          "timestamp": "2025-10-18T02:06:53.629Z"
           "timestamp": "2025-10-18T19:12:48.858Z"
         },
         {
@@ -390,6 +441,7 @@
           "success": true,
           "duration": 32,
           "error": null,
+          "timestamp": "2025-10-18T02:06:53.661Z"
           "timestamp": "2025-10-18T19:12:48.890Z"
         },
         {
@@ -402,6 +454,7 @@
                 "reserveIn": 5234567.89,
                 "reserveOut": 5189234.21,
                 "tradeAmount": 500000,
+                "timestamp": "2025-10-18T02:06:53.662Z"
                 "timestamp": "2025-10-18T19:12:48.891Z"
               },
               "success": true
@@ -409,6 +462,7 @@
             {
               "name": "Create stablecoin opportunity",
               "data": {
+                "id": 1760753213663
                 "id": 1760814768892
               },
               "success": true
@@ -416,6 +470,7 @@
             {
               "name": "Execute low-slippage stablecoin trade",
               "data": {
+                "id": 1760753213664,
                 "id": 1760814768894,
                 "profit": 51.89,
                 "slippage": 0.0009
@@ -424,6 +479,9 @@
             }
           ],
           "success": true,
+          "duration": 3,
+          "error": null,
+          "timestamp": "2025-10-18T02:06:53.664Z"
           "duration": 4,
           "error": null,
           "timestamp": "2025-10-18T19:12:48.894Z"
@@ -458,6 +516,7 @@
           "success": true,
           "duration": 8,
           "error": null,
+          "timestamp": "2025-10-18T02:06:53.672Z"
           "timestamp": "2025-10-18T19:12:48.902Z"
         },
         {
@@ -466,6 +525,7 @@
             {
               "name": "Detect opportunity under favorable conditions",
               "data": {
+                "id": 1760753213673
                 "id": 1760814768903
               },
               "success": true
@@ -476,6 +536,7 @@
                 "flashloanAmount": 0,
                 "flashloanFee": 0.0009,
                 "gasCost": 150,
+                "timestamp": "2025-10-18T02:06:53.675Z"
                 "timestamp": "2025-10-18T19:12:48.905Z"
               },
               "success": true
@@ -489,8 +550,16 @@
             }
           ],
           "success": true,
-          "duration": 3,
+          "duration": 5,
           "error": null,
+          "timestamp": "2025-10-18T02:06:53.677Z"
+        }
+      ],
+      "timestamp": "2025-10-18T02:06:53.677Z",
+      "apiBaseUrl": "http://localhost:3001"
+    }
+  },
+  "timestamp": "2025-10-18T02:06:53.684Z",
           "timestamp": "2025-10-18T19:12:48.906Z"
         }
       ],

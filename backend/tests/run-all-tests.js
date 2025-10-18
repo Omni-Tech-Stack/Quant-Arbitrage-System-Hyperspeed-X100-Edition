@@ -73,21 +73,20 @@ async function ensureServerRunning() {
   log('Server not detected. Starting server...', COLORS.yellow);
   
   // Start the server
-  serverProcess = spawn(process.execPath, ['server.js'], {
+  serverProcess = spawn('node', ['server.js'], {
     cwd: path.join(__dirname, '..'),
-    stdio: ['ignore', 'pipe', 'pipe'],  // Pipe stdout and stderr for visibility
+    stdio: 'pipe',
     env: { ...process.env, DEMO_MODE: 'false' }
   });
   
   serverProcess.stdout.on('data', (data) => {
-    // Show server output in CI or verbose mode for debugging
+    // Show server logs in VERBOSE mode or in CI for debugging
     if (process.env.VERBOSE || process.env.CI) {
       console.log(`[Server] ${data.toString().trim()}`);
     }
   });
   
   serverProcess.stderr.on('data', (data) => {
-    // Always show errors
     console.error(`[Server Error] ${data.toString().trim()}`);
   });
   
@@ -110,16 +109,7 @@ async function ensureServerRunning() {
 function stopServer() {
   if (serverStarted && serverProcess) {
     log('\nStopping server...', COLORS.cyan);
-    serverProcess.kill('SIGTERM');
-    
-    // Give process time to clean up, then force kill if needed
-    setTimeout(() => {
-      if (serverProcess && !serverProcess.killed) {
-        log('Force killing server process...', COLORS.yellow);
-        serverProcess.kill('SIGKILL');
-      }
-    }, 2000);
-    
+    serverProcess.kill();
     serverProcess = null;
     log('✓ Server stopped', COLORS.green);
   }
