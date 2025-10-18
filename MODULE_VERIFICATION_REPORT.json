@@ -1,22 +1,25 @@
 {
-  "timestamp": "2025-10-18T17:07:50.497Z",
+  "timestamp": "2025-10-18T20:20:14.843Z",
   "repository": "Quant-Arbitrage-System-Hyperspeed-X100-Edition",
   "totalModules": 3,
   "fileStatistics": {
-    ".js": 22,
+    ".js": 24,
     ".ts": 1,
-    ".json": 14,
-    ".md": 38,
-    ".py": 23
+    ".json": 13,
+    ".md": 49,
+    ".py": 34
   },
-  "totalTestFiles": 18,
+  "totalTestFiles": 27,
   "testFiles": [
     "backend/test-results/feature-test-results-1760680760295.json",
     "backend/test-results/unit-test-results-1760680760093.json",
+    "backend/tests/end-to-end-workflow.test.js",
     "backend/tests/feature/arbitrage-scenarios.test.js",
+    "backend/tests/flashloan-api.test.js",
     "backend/tests/run-all-tests.js",
     "backend/tests/unit/api.test.js",
     "backend/tests/web3-integration.test.js",
+    "models/arb_ml_latest.pkl",
     "scripts/backtesting.py",
     "scripts/test_merkle_sender.py",
     "scripts/test_opportunity_detector.py",
@@ -25,6 +28,12 @@
     "test-flashloan-integration.js",
     "test_all_js_modules.sh",
     "test_all_python_modules.sh",
+    "test_dual_ai_system.py",
+    "tests/run_all_tests.py",
+    "tests/test_core_modules.py",
+    "tests/test_opportunity_detector.py",
+    "tests/test_pool_registry.py",
+    "tests/test_tvl_fetchers.py",
     "ultra-fast-arbitrage-engine/test-arbitrage-flow.js",
     "ultra-fast-arbitrage-engine/test-setup.js",
     "ultra-fast-arbitrage-engine/test-verbose.js",
@@ -35,7 +44,7 @@
       "name": "Backend API",
       "path": "backend",
       "fileCounts": {
-        ".js": 8,
+        ".js": 10,
         ".ts": 0,
         ".json": 5,
         ".md": 3,
@@ -44,12 +53,14 @@
       "testFiles": [
         "test-results/feature-test-results-1760680760295.json",
         "test-results/unit-test-results-1760680760093.json",
+        "tests/end-to-end-workflow.test.js",
         "tests/feature/arbitrage-scenarios.test.js",
+        "tests/flashloan-api.test.js",
         "tests/run-all-tests.js",
         "tests/unit/api.test.js",
         "tests/web3-integration.test.js"
       ],
-      "testFileCount": 6
+      "testFileCount": 8
     },
     {
       "name": "Ultra-Fast Arbitrage Engine",
