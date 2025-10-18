@@ -6,13 +6,9 @@
     "verify": "node verify-all-modules.js",
     "verify:backend": "cd backend && npm test",
     "verify:engine": "cd ultra-fast-arbitrage-engine && npm run build && npm test",
-    "install:all": "cd backend && npm install && cd ../ultra-fast-arbitrage-engine && npm install && cd ../frontend && npm install",
+    "install:all": "cd backend && npm install && cd ../ultra-fast-arbitrage-engine && npm install",
     "build:all": "cd ultra-fast-arbitrage-engine && npm run build:rust && npm run build",
-    "build:production": "./build-production.sh",
-    "test:all": "npm run verify",
-    "deploy": "./deploy.sh",
-    "launch": "./launch-live.sh",
-    "stop": "./stop-live.sh"
+    "test:all": "npm run verify"
   },
   "keywords": [
     "arbitrage",
