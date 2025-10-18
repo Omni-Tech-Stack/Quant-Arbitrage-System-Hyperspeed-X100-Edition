@@ -8,7 +8,14 @@
     "verify:engine": "cd ultra-fast-arbitrage-engine && npm run build && npm test",
     "install:all": "cd backend && npm install && cd ../ultra-fast-arbitrage-engine && npm install",
     "build:all": "cd ultra-fast-arbitrage-engine && npm run build:rust && npm run build",
-    "test:all": "npm run verify"
+    "test:all": "npm run verify",
+    "test:python": "./test_all_python_modules.sh",
+    "test:js": "./test_all_js_modules.sh",
+    "test:comprehensive": "npm run test:python && npm run test:js && npm run verify:backend",
+    "pool:fetch": "node dex_pool_fetcher.js",
+    "pool:sdk": "node sdk_pool_loader.js",
+    "orchestrator:test": "python3 main_quant_hybrid_orchestrator.py --test",
+    "tvl:fetch": "python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon bsc"
   },
   "keywords": [
     "arbitrage",
