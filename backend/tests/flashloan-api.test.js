@@ -12,7 +12,7 @@ let serverProcess;
 // Start the server
 function startServer() {
   return new Promise((resolve, reject) => {
-    serverProcess = spawn('node', ['server.js'], {
+    serverProcess = spawn(process.execPath, ['server.js'], {
       cwd: __dirname + '/..',
       env: { ...process.env, DEMO_MODE: 'true' }
     });
