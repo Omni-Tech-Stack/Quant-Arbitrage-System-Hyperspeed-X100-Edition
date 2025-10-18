@@ -185,9 +185,17 @@ class DualAIMLEngine:
         return base_slippage * (1 + hops * 0.5)
     
     def _calculate_volatility_indicator(self, opp: Dict[str, Any]) -> float:
-        """Calculate volatility indicator (mock - use real price data in production)"""
-        # In production, this would use historical price volatility
-        return 0.5  # Neutral volatility
+        """Calculate volatility indicator using historical price data (standard deviation of log returns)"""
+        prices = opp.get('historical_prices', None)
+        if prices is not None and isinstance(prices, (list, np.ndarray)) and len(prices) > 1:
+            prices = np.array(prices)
+            log_returns = np.diff(np.log(prices))
+            volatility = np.std(log_returns)
+            # Normalize volatility to 0-1 range (assuming max reasonable volatility of 0.1)
+            return min(volatility / 0.1, 1.0)
+        else:
+            # If no price history, return 0.0 (no volatility info)
+            return 0.0
     
     def score_opportunities(self, opportunities: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """
