@@ -4,7 +4,7 @@ package-lock.json
 
 # Test results (keep template/example, exclude generated)
 backend/test-results/*.json
-!backend/test-results/comprehensive-report.json
+backend/test-results/*.md
 !backend/test-results/.gitkeep
 
 # Logs
