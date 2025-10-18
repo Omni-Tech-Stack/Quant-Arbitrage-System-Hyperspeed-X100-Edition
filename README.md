@@ -474,3 +474,29 @@ MIT — Open for all trading, research, and DeFi protocol use.
 ---
 
 **For further details and module docs, see each file’s README or open an issue/PR. This repo is designed for continuous evolution and rapid quant innovation.**
+
+## 🔒 Security & Operations Documentation
+
+### Security Documentation
+- **[SECURITY.md](SECURITY.md)** - Security best practices for Web3 integration
+- **[SECURITY_AUDIT.md](SECURITY_AUDIT.md)** - External audit guide and formal verification
+- **[SECRETS_MANAGEMENT.md](SECRETS_MANAGEMENT.md)** - Key management, HSM, and multi-sig setup
+- **[MEV_PROTECTION.md](MEV_PROTECTION.md)** - MEV protection and front-running defense
+- **[DEPENDENCY_SECURITY.md](DEPENDENCY_SECURITY.md)** - Dependency management and SBOM
+
+### Testing & Deployment
+- **[MAINNET_FORK_TESTING.md](MAINNET_FORK_TESTING.md)** - Comprehensive fork testing guide
+- **[TESTING.md](TESTING.md)** - Testing documentation and coverage
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment guide and procedures
+
+### Operations
+- **[OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md)** - Daily operations, troubleshooting, incident response
+
+### Architecture & Components
+**Core Safety Systems:**
+- `circuit_breaker.py` - Runtime safety, kill switch, emergency pause
+- `config/safety_limits.py` - Configurable safety thresholds
+- `observability.py` - Comprehensive metrics and monitoring
+- `alerting.py` - Multi-channel alerting system
+- `pnl_accounting.py` - P&L tracking and tax reporting
+- `liquidity_provider_failover.py` - Provider health and failover
