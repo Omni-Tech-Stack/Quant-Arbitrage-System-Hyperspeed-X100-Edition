@@ -1,7 +1,6 @@
 # Comprehensive API Test Report
 
-**Generated:** 2025-10-18T02:06:53.684Z
-**Generated:** 2025-10-18T19:12:48.915Z
+**Generated:** 2025-10-18T23:21:19.662Z
 **API Base URL:** http://localhost:3001
 **Overall Status:** ✅ PASSED
 
@@ -9,10 +8,8 @@
 
 | Suite Name | Status | Duration |
 |------------|--------|----------|
-| Unit Tests | ✅ PASS | 215ms |
-| Feature/Scenario Tests | ✅ PASS | 200ms |
-| Unit Tests | ✅ PASS | 219ms |
-| Feature/Scenario Tests | ✅ PASS | 203ms |
+| Unit Tests | ✅ PASS | 220ms |
+| Feature/Scenario Tests | ✅ PASS | 211ms |
 
 ## Unit Tests
 
@@ -26,30 +23,20 @@
 | Test Name | Status | Duration |
 |-----------|--------|----------|
 | Health Check - GET /api/health | ✅ | 23ms |
-| Get Opportunities - GET /api/opportunities | ✅ | 2ms |
-| Get Trades - GET /api/trades | ✅ | 2ms |
+| Get Opportunities - GET /api/opportunities | ✅ | 3ms |
+| Get Trades - GET /api/trades | ✅ | 3ms |
 | Get Trades with Limit - GET /api/trades?limit=10 | ✅ | 4ms |
 | Get Statistics - GET /api/stats | ✅ | 2ms |
 | Post Opportunity - POST /api/opportunities | ✅ | 8ms |
 | Post Trade - POST /api/trades | ✅ | 3ms |
 | Calculate Flashloan - POST /api/calculate-flashloan | ✅ | 2ms |
 | Calculate Market Impact - POST /api/calculate-impact | ✅ | 3ms |
-| Simulate Parallel Paths - POST /api/simulate-paths | ✅ | 3ms |
-| Invalid Endpoint - GET /api/invalid | ✅ | 4ms |
-| Post Opportunity with Missing Fields - POST /api/opportunities | ✅ | 2ms |
-| Concurrent Requests - Multiple GET /api/health | ✅ | 18ms |
-| Get Trades with Limit - GET /api/trades?limit=10 | ✅ | 3ms |
-| Get Statistics - GET /api/stats | ✅ | 2ms |
-| Post Opportunity - POST /api/opportunities | ✅ | 9ms |
-| Post Trade - POST /api/trades | ✅ | 3ms |
-| Calculate Flashloan - POST /api/calculate-flashloan | ✅ | 2ms |
-| Calculate Market Impact - POST /api/calculate-impact | ✅ | 3ms |
 | Simulate Parallel Paths - POST /api/simulate-paths | ✅ | 2ms |
-| Invalid Endpoint - GET /api/invalid | ✅ | 5ms |
+| Invalid Endpoint - GET /api/invalid | ✅ | 4ms |
 | Post Opportunity with Missing Fields - POST /api/opportunities | ✅ | 2ms |
 | Concurrent Requests - Multiple GET /api/health | ✅ | 19ms |
 | Large Payload - POST /api/opportunities | ✅ | 3ms |
-| Rapid Sequential Requests - POST opportunities | ✅ | 27ms |
+| Rapid Sequential Requests - POST opportunities | ✅ | 29ms |
 
 ## Feature/Scenario Tests
 
@@ -62,18 +49,13 @@
 
 | Scenario Name | Status | Steps | Duration |
 |---------------|--------|-------|----------|
-| Complete Profitable Arbitrage Workflow | ✅ | 6 | 34ms |
-| Unprofitable Opportunity Detection | ✅ | 3 | 5ms |
-| Multi-Path Arbitrage Analysis | ✅ | 3 | 5ms |
-| High-Frequency Trading Simulation | ✅ | 3 | 32ms |
-| Stablecoin Arbitrage (Low Slippage) | ✅ | 3 | 3ms |
-| Complete Profitable Arbitrage Workflow | ✅ | 6 | 33ms |
+| Complete Profitable Arbitrage Workflow | ✅ | 6 | 35ms |
 | Unprofitable Opportunity Detection | ✅ | 3 | 6ms |
-| Multi-Path Arbitrage Analysis | ✅ | 3 | 6ms |
-| High-Frequency Trading Simulation | ✅ | 3 | 32ms |
+| Multi-Path Arbitrage Analysis | ✅ | 3 | 7ms |
+| High-Frequency Trading Simulation | ✅ | 3 | 33ms |
 | Stablecoin Arbitrage (Low Slippage) | ✅ | 3 | 4ms |
-| MEV Bundle Submission Workflow | ✅ | 3 | 8ms |
-| Market Condition Change Response | ✅ | 3 | 5ms |
+| MEV Bundle Submission Workflow | ✅ | 3 | 9ms |
+| Market Condition Change Response | ✅ | 3 | 4ms |
 
 ## Overall Summary
 
