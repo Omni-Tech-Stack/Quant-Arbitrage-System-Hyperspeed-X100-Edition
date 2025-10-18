@@ -8,19 +8,29 @@ Provides structured logging and metrics export
 import time
 import json
 import logging
+import os
 from datetime import datetime
 from collections import defaultdict, deque
 from typing import Dict, List, Optional
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/observability.log'),
-        logging.StreamHandler()
-    ]
-)
+def setup_logging():
+    """
+    Configures logging for the observability module.
+    Log level and log file can be set via environment variables:
+    - OBSERVABILITY_LOG_LEVEL (default: INFO)
+    - OBSERVABILITY_LOG_FILE (default: logs/observability.log)
+    """
+    log_level = os.environ.get("OBSERVABILITY_LOG_LEVEL", "INFO").upper()
+    log_file = os.environ.get("OBSERVABILITY_LOG_FILE", "logs/observability.log")
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    handlers = [logging.StreamHandler()]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file))
+    logging.basicConfig(
+        level=getattr(logging, log_level, logging.INFO),
+        format=log_format,
+        handlers=handlers
+    )
 
 logger = logging.getLogger(__name__)
 
