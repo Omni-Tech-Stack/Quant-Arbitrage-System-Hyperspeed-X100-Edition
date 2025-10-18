@@ -219,7 +219,7 @@ All documentation is licensed under MIT License - See [LICENSE](../LICENSE) file
 
 ---
 
-**Last Updated:** 2025-10-18
+**Last Updated:** See [commit history](https://github.com/Omni-Tech-Stack/Quant-Arbitrage-System-Hyperspeed-X100-Edition/commits/main) for details.
 
 For the latest documentation, visit:
 https://github.com/Omni-Tech-Stack/Quant-Arbitrage-System-Hyperspeed-X100-Edition
