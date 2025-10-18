@@ -16,9 +16,85 @@ const walletManager = new WalletManager();
 const blockchainConnector = new BlockchainConnector();
 let web3Utils = null;
 
+// Rate limiting configuration
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMITS = {
+  '/api/opportunities': { max: 100, window: RATE_LIMIT_WINDOW_MS },
+  '/api/trades': { max: 100, window: RATE_LIMIT_WINDOW_MS },
+  '/api/calculate-flashloan': { max: 50, window: RATE_LIMIT_WINDOW_MS },
+  '/api/wallet/*': { max: 10, window: RATE_LIMIT_WINDOW_MS },
+  'default': { max: 200, window: RATE_LIMIT_WINDOW_MS }
+};
+
+// Rate limiting middleware
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  
+  // Find matching rate limit config
+  let limitConfig = RATE_LIMITS.default;
+  for (const [path, config] of Object.entries(RATE_LIMITS)) {
+    if (path !== 'default' && req.path.startsWith(path.replace('/*', ''))) {
+      limitConfig = config;
+      break;
+    }
+  }
+  
+  // Get or create rate limit entry for this IP and path
+  const key = `${ip}:${req.path}`;
+  if (!rateLimitStore.has(key)) {
+    rateLimitStore.set(key, { count: 0, resetTime: now + limitConfig.window });
+  }
+  
+  const limiter = rateLimitStore.get(key);
+  
+  // Reset if window expired
+  if (now > limiter.resetTime) {
+    limiter.count = 0;
+    limiter.resetTime = now + limitConfig.window;
+  }
+  
+  // Check limit
+  if (limiter.count >= limitConfig.max) {
+    const retryAfter = Math.ceil((limiter.resetTime - now) / 1000);
+    res.set('Retry-After', retryAfter);
+    res.set('X-RateLimit-Limit', limitConfig.max);
+    res.set('X-RateLimit-Remaining', 0);
+    res.set('X-RateLimit-Reset', new Date(limiter.resetTime).toISOString());
+    
+    return res.status(429).json({
+      error: 'Too many requests',
+      message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+      retryAfter: retryAfter
+    });
+  }
+  
+  // Increment counter
+  limiter.count++;
+  
+  // Set rate limit headers
+  res.set('X-RateLimit-Limit', limitConfig.max);
+  res.set('X-RateLimit-Remaining', limitConfig.max - limiter.count);
+  res.set('X-RateLimit-Reset', new Date(limiter.resetTime).toISOString());
+  
+  next();
+}
+
+// Cleanup old rate limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, limiter] of rateLimitStore.entries()) {
+    if (now > limiter.resetTime + RATE_LIMIT_WINDOW_MS) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 300000); // Clean up every 5 minutes
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(rateLimit); // Apply rate limiting to all routes
 
 // Store for arbitrage data
 const arbitrageData = {
