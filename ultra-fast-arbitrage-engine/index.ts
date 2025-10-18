@@ -4,8 +4,18 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 
-const native = require(path.join(__dirname, '..', 'native', 'math_engine.node'));
+// Try to load native module, fall back to JavaScript implementation if not available
+let native: any;
+const nativePath = path.join(__dirname, '..', 'native', 'math_engine.node');
+
+if (fs.existsSync(nativePath)) {
+  native = require(nativePath);
+} else {
+  // Fallback JavaScript implementation for when Rust native module is not built
+  native = require(path.join(__dirname, '..', 'native', 'math_engine_fallback.js'));
+}
 
 /**
  * Compute slippage for Uniswap V2 style constant product pools
