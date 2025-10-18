@@ -54,6 +54,7 @@ jobs:
           name: unit-test-results-node-${{ matrix.node-version }}
           path: backend/test-results/unit-test-results-1760680760093.json
           retention-days: 30
+          overwrite: true
       
       - name: Upload test report
         if: always()
@@ -62,6 +63,7 @@ jobs:
           name: test-report-node-${{ matrix.node-version }}
           path: backend/test-results/TEST-REPORT.md
           retention-days: 30
+          overwrite: true
       
       - name: Comment PR with test results
         if: github.event_name == 'pull_request' && always()

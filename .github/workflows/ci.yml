@@ -56,3 +56,4 @@ jobs:
           ultra-fast-arbitrage-engine/dist/
           ultra-fast-arbitrage-engine/native/*.node
         retention-days: 7
+        overwrite: true
