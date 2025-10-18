@@ -7,6 +7,14 @@ const WalletManager = require('./wallet-manager');
 const BlockchainConnector = require('./blockchain-connector');
 const Web3Utilities = require('./web3-utilities');
 
+// Import ultra-fast arbitrage engine
+const {
+  calculateFlashloanAmount,
+  calculateMarketImpact,
+  calculateMultihopSlippage,
+  simulateParallelFlashloanPaths
+} = require('../ultra-fast-arbitrage-engine/dist/index.js');
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -91,22 +99,41 @@ app.post('/api/calculate-flashloan', (req, res) => {
       reserveOutBuy,
       reserveInSell,
       reserveOutSell,
-      flashloanFee = 0.0009, // Default to Aave fee
+      flashloanFee = 0.0009, // Default to Aave fee (0.09%)
       gasCost = 100
     } = req.body;
 
-    // Import the engine functions (assuming it's available)
-    // In production, this would be properly imported at the top
-    const flashloanAmount = 0; // Placeholder - would use real calculation
+    // Validate required parameters
+    if (!reserveInBuy || !reserveOutBuy || !reserveInSell || !reserveOutSell) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters',
+        required: ['reserveInBuy', 'reserveOutBuy', 'reserveInSell', 'reserveOutSell']
+      });
+    }
+
+    // Calculate optimal flashloan amount using Rust engine
+    const flashloanAmount = calculateFlashloanAmount(
+      reserveInBuy,
+      reserveOutBuy,
+      reserveInSell,
+      reserveOutSell,
+      flashloanFee,
+      gasCost
+    );
     
     res.json({
+      success: true,
       flashloanAmount,
       flashloanFee,
       gasCost,
+      profitable: flashloanAmount > 0,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 
@@ -119,18 +146,31 @@ app.post('/api/calculate-impact', (req, res) => {
       tradeAmount
     } = req.body;
 
-    // Placeholder for actual calculation
-    const impact = 0;
+    // Validate required parameters
+    if (!reserveIn || !reserveOut || !tradeAmount) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters',
+        required: ['reserveIn', 'reserveOut', 'tradeAmount']
+      });
+    }
+
+    // Calculate market impact using Rust engine
+    const impact = calculateMarketImpact(reserveIn, reserveOut, tradeAmount);
     
     res.json({
+      success: true,
       marketImpact: impact,
+      marketImpactPct: impact.toFixed(4) + '%',
       reserveIn,
       reserveOut,
       tradeAmount,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 
@@ -144,16 +184,119 @@ app.post('/api/simulate-paths', (req, res) => {
       gasCosts
     } = req.body;
 
-    // Placeholder for actual calculation
-    const results = [];
+    // Validate required parameters
+    if (!paths || !Array.isArray(paths) || paths.length === 0) {
+      return res.status(400).json({ 
+        error: 'Missing or invalid paths parameter',
+        required: 'paths must be a non-empty array'
+      });
+    }
+
+    if (!flashloanAmounts || !Array.isArray(flashloanAmounts)) {
+      return res.status(400).json({ 
+        error: 'Missing or invalid flashloanAmounts parameter',
+        required: 'flashloanAmounts must be an array'
+      });
+    }
+
+    if (!gasCosts || !Array.isArray(gasCosts)) {
+      return res.status(400).json({ 
+        error: 'Missing or invalid gasCosts parameter',
+        required: 'gasCosts must be an array'
+      });
+    }
+
+    // Ensure arrays have matching lengths
+    if (paths.length !== flashloanAmounts.length || paths.length !== gasCosts.length) {
+      return res.status(400).json({ 
+        error: 'Array length mismatch',
+        message: 'paths, flashloanAmounts, and gasCosts must have the same length'
+      });
+    }
+
+    // Simulate parallel paths using Rust engine
+    const results = simulateParallelFlashloanPaths(
+      paths,
+      flashloanAmounts,
+      flashloanFee,
+      gasCosts
+    );
+
+    // Find the best path
+    let bestPathIndex = 0;
+    let bestProfit = results[0][0];
+    
+    results.forEach((result, idx) => {
+      if (result[0] > bestProfit) {
+        bestProfit = result[0];
+        bestPathIndex = idx;
+      }
+    });
+
+    // Format results for response
+    const formattedResults = results.map((result, idx) => ({
+      pathIndex: idx,
+      profit: result[0],
+      slippage: result[1],
+      slippagePct: result[1].toFixed(4) + '%',
+      isBest: idx === bestPathIndex
+    }));
     
     res.json({
-      results,
-      bestPathIndex: 0,
+      success: true,
+      results: formattedResults,
+      bestPathIndex,
+      bestProfit,
+      totalPathsSimulated: paths.length,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+});
+
+// Calculate multi-hop slippage for complex arbitrage paths
+app.post('/api/calculate-multihop-slippage', (req, res) => {
+  try {
+    const {
+      path,
+      flashloanAmount
+    } = req.body;
+
+    // Validate required parameters
+    if (!path || !Array.isArray(path) || path.length === 0) {
+      return res.status(400).json({ 
+        error: 'Missing or invalid path parameter',
+        required: 'path must be a non-empty array of [reserveIn, reserveOut] pairs'
+      });
+    }
+
+    if (!flashloanAmount || flashloanAmount <= 0) {
+      return res.status(400).json({ 
+        error: 'Missing or invalid flashloanAmount parameter',
+        required: 'flashloanAmount must be a positive number'
+      });
+    }
+
+    // Calculate multi-hop slippage using Rust engine
+    const totalSlippage = calculateMultihopSlippage(path, flashloanAmount);
+    
+    res.json({
+      success: true,
+      totalSlippage,
+      totalSlippagePct: totalSlippage.toFixed(4) + '%',
+      hops: path.length,
+      flashloanAmount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 });
 
