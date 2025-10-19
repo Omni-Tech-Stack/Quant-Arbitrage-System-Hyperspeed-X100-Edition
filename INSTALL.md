@@ -325,6 +325,42 @@ chmod +x setup.sh
   pip install -r requirements.txt
   ```
 
+**"WARNING: Ignoring invalid distribution ~ympy" (Corrupted Package)**
+
+This warning indicates a corrupted package installation (usually numpy). To fix:
+
+1. **Option 1: Use Virtual Environment (Recommended)**
+   ```bash
+   # Create clean environment
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # Linux/Mac:
+   source venv/bin/activate
+   
+   # Install in clean environment
+   pip install -r requirements.txt
+   ```
+
+2. **Option 2: Clean Corrupted Packages**
+   ```bash
+   # Uninstall corrupted packages
+   pip uninstall numpy pandas scikit-learn -y
+   
+   # Clear cache
+   pip cache purge
+   
+   # Reinstall
+   pip install -r requirements.txt
+   ```
+
+3. **Option 3: Manual Cleanup (Windows)**
+   - Navigate to: `C:\Users\<YourUsername>\AppData\Local\Programs\Python\Python3XX\Lib\site-packages`
+   - Delete folders starting with `~` (e.g., `~ympy`, `~andas`)
+   - Run: `pip install -r requirements.txt`
+
+**Best Practice:** Always use a virtual environment to avoid package conflicts and corruption.
+
 ### Runtime Issues
 
 **"Port 3001 already in use"**

@@ -37,9 +37,18 @@ The system uses **ensemble prediction**, combining both models for superior perf
 ## Installation
 
 ### Prerequisites
+
+**Recommended: Install all dependencies from requirements.txt**
+```bash
+pip install -r requirements.txt
+```
+
+**Alternative: Install only ML dependencies**
 ```bash
 pip install numpy pandas scikit-learn joblib xgboost onnx>=1.17.0 onnxruntime skl2onnx
 ```
+
+> **Note:** If you encounter issues with corrupted packages, see the [Troubleshooting](#troubleshooting) section below.
 
 ### Quick Start
 ```bash
@@ -321,6 +330,64 @@ Train ML models on historical data.
 - [ ] Distributed training on multiple nodes
 - [ ] Auto-hyperparameter tuning
 - [ ] Explainable AI features
+
+## Troubleshooting
+
+### Corrupted Package Installation
+
+If you encounter warnings about invalid or corrupted distributions (e.g., `~ympy` instead of `numpy`):
+
+**Solution 1: Use a Virtual Environment (Recommended)**
+```bash
+# Create a new virtual environment
+python -m venv venv
+
+# Activate it
+# On Windows:
+venv\Scripts\activate
+# On Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies in the clean environment
+pip install -r requirements.txt
+```
+
+**Solution 2: Clean and Reinstall Packages**
+```bash
+# Uninstall corrupted packages
+pip uninstall numpy pandas scikit-learn joblib xgboost onnx onnxruntime skl2onnx -y
+
+# Clear pip cache
+pip cache purge
+
+# Reinstall from requirements.txt
+pip install -r requirements.txt
+```
+
+**Solution 3: Fix Corrupted Package Directories**
+```bash
+# On Windows, manually remove corrupted package folders
+# Navigate to: C:\Users\<YourUsername>\AppData\Local\Programs\Python\Python3XX\Lib\site-packages
+# Delete folders starting with ~ (e.g., ~ympy)
+
+# Then reinstall
+pip install -r requirements.txt
+```
+
+### Common Installation Issues
+
+**"ModuleNotFoundError" after installation:**
+- Ensure you're using the correct Python version (3.8+)
+- Verify installation: `pip list | grep -i <package-name>`
+- Try reinstalling the specific package
+
+**Version conflicts:**
+- Use a virtual environment to isolate dependencies
+- Check for conflicting packages: `pip check`
+
+**Slow installation:**
+- Use a faster mirror: `pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+- Install pre-built wheels: `pip install --only-binary :all: -r requirements.txt`
 
 ## License
 
