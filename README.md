@@ -803,3 +803,235 @@ MIT — Open for all trading, research, and DeFi protocol use.
 ---
 
 **For further details and module docs, see each file’s README or open an issue/PR. This repo is designed for continuous evolution and rapid quant innovation.**
+
+
+LIVE / REAL OPERATIONS RUNBOOK (Step‑by‑Step)
+
+Purpose: a precise, no‑fluff execution script to take Hyperspeed X100 from cold boot to live arbitrage, with preflight checks, dry‑run, go‑live, monitoring, and rollback. All commands are ordered. Windows‑first, Docker Desktop, Yarn‑based. Cloud hand‑off steps included.
+
+Hard rules
+
+Never commit .env with secrets. Use .env.local for overrides. Keep your real keys in a secure store.
+
+Default to SIMULATION until all checks pass; flip to LIVE only at the go‑live step.
+
+0) Pre‑Flight: Files, Secrets, and System
+
+Create/verify your .env (do not commit):
+
+Ensure PRIVATE_KEY, EXECUTOR_ADDRESS, BOT_ADDRESS are present and correct for your funding wallet.
+
+Set TRADING_MODE=simulation and LIVE_TRADING=false initially, even if your template says otherwise.
+
+Verify RPCs respond: PUBLIC_POLYGON_RPC or ALCHEMY_RPC_URL.
+
+OS prerequisites (Windows 10/11):
+
+Docker Desktop (WSL2 enabled), Node 20+, Python 3.11+, Yarn.
+
+Repo bootstrap:
+
+setup.bat
+
+Model presence:
+
+Ensure models/xgboost_primary.pkl and models/onnx_model.onnx exist; if not, train:
+
+python train_dual_ai_models.py --samples 1000 --validate
+
+1) Start Core Stack (Deterministic Order)
+
+Start observability plane (optional but recommended):
+
+docker compose -f docker-compose.observability.yml up -d
+
+Boot application services:
+
+docker compose up --build
+
+Verify health:
+
+Backend: curl http://localhost:3001/api/health
+
+Streamlit: open http://localhost:8501
+
+Grafana: http://localhost:3002 (anonymous)
+
+Expected: backend { status: "ok" } JSON, dashboard reading recent logs.
+
+2) Simulation Dry‑Run (Safe Mode)
+
+Force sim mode in env:
+
+TRADING_MODE=simulation
+
+LIVE_TRADING=false
+
+SIMULATION_ENABLED=true
+
+Run Phase 2/4 demo cycles (sanity):
+
+python quant_arb_system_phase2.py
+python quant_arb_system_phase4.py
+
+Start hybrid orchestrator (test switch):
+
+python main_quant_hybrid_orchestrator.py --test
+
+Confirm outputs:
+
+logs/phase2_exec.log, logs/phase4_exec.log, logs/system.log show cycles with tx hash placeholders.
+
+Telemetry check: Grafana → panels update (prediction throughput, request latency, logs stream).
+
+3) Network/Protocol Pre‑Checks (Zero‑Revert Discipline)
+
+Protocol liveness:
+
+python dex_protocol_precheck.py
+
+Registry integrity:
+
+python scripts/test_registry_integrity.py
+
+Opportunity engine tests:
+
+python scripts/test_opportunity_detector.py
+python scripts/backtesting.py
+
+Gas + slippage guards: ensure in .env:
+
+MAX_GAS_PRICE_GWEI, PRIORITY_FEE_GWEI, MAX_SLIPPAGE_PERCENT, CONFIDENCE_THRESHOLD.
+
+Gate: proceed only if all checks pass and no revert warnings are emitted.
+
+4) MEV Relay Readiness (Private Bundle Path)
+
+Relay endpoints: ensure FLASHBOTS_RELAY (and any others) reachable from host.
+
+Dry‑run encoding:
+
+python arb_request_encoder.py --dry-run
+
+Private submission smoke test: (simulation mode)
+
+python BillionaireBot_bloxroute_gateway_Version2.py --simulate
+
+Wallet & nonce sanity: confirm hot wallet has funds for L2/L1 gas; ensure nonce progression clean.
+
+5) Go‑Live Switch (Controlled)
+
+Set env toggles:
+
+TRADING_MODE=production
+
+LIVE_TRADING=true
+
+Ensure SIMULATE_BEFORE_EXECUTION=false only after confidence checks.
+
+Restart services with new env:
+
+docker compose down
+docker compose up --build -d
+
+Start orchestrator for live run:
+
+python main_quant_hybrid_orchestrator.py
+
+Observe first 5 cycles in dashboards:
+
+Ensure Zero‑revert holds, fill rate > threshold, P&L positive.
+
+Kill‑switch at hand: be ready to revert LIVE_TRADING=false and restart if anomalies.
+
+6) Real‑Time Monitoring & SLOs
+
+Golden Signals (Grafana):
+
+Prediction throughput: prediction_count_total rate ≥ target (e.g., 50–110k/sec)
+
+Latency p95: backend < 250 ms; relay < 1.5 s confirmation window
+
+Revert rate: < 0.5% under normal ops
+
+Win rate: > 65% (strategy‑dependent)
+
+Alert thresholds:
+
+High CPU > 85% (2m) → investigate backpressure; autoscale AI
+
+Throughput < 50k (3m) → check model, RPC, or queue saturation
+
+Error spikes in Loki logs → halt live execution if persistent
+
+7) Capital, Risk & Sizing Controls (Live)
+
+MIN_PROFIT_USD enforces hard floor; start conservative (e.g., $25–$50) and tune.
+
+MAX_TRADE_SIZE_USD capped; ramp gradually.
+
+Exposure caps per token/DEX: MAX_EXPOSURE_PER_TOKEN, MAX_EXPOSURE_PER_DEX.
+
+Gas guardrails: MAX_GAS_PRICE_GWEI, GAS_ESCALATION_MULTIPLIER.
+
+Recommended ramps:
+
+24–48h at tiny sizes; log edge cases.
+
+Gradual lift of MAX_TRADE_SIZE_USD with profit reinforcement.
+
+8) Incident Response & Rollback
+
+Immediate pause (no container stop):
+
+Set LIVE_TRADING=false in .env → docker compose restart backend (if backend reads env) and stop orchestrator process.
+
+Hard stop:
+
+docker compose down
+
+Rollback to safe sim mode:
+
+TRADING_MODE=simulation, LIVE_TRADING=false, re‑up services and continue diagnosing.
+
+Forensics:
+
+Export Grafana panels, Loki logs, and Prometheus snapshots for the incident window; tag trade IDs.
+
+9) Cloud Hand‑Off (AWS/ECS, Optional at Go‑Live+)
+
+Build & push images to ECR (Phase 5/6 pipeline can do this automatically on main):
+
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <acct>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t backend:latest . && docker tag backend:latest <acct>.dkr.ecr.us-east-1.amazonaws.com/backend:latest && docker push <acct>.dkr.ecr.us-east-1.amazonaws.com/backend:latest
+
+Register task & update service:
+
+aws ecs register-task-definition --cli-input-json file://ecs-task-def.json
+aws ecs update-service --cluster quant-arb-ecs-cluster --service quant-arb-service --force-new-deployment
+
+Autoscaling & GuardDuty: ensure policies active; SNS alerting wired.
+
+10) Daily Operations Cadence
+
+Morning checks: health endpoints, Grafana SLOs, trade logs diff.
+
+Retrain window: TRAINING_INTERVAL_HOURS=24 — schedule during low‑vol hours.
+
+Key rotation cadence (secrets store), vault audit.
+
+Weekly chaos drill: simulated RPC degradation and relay failover.
+
+11) Compliance & Safety Notes
+
+Do not operate in jurisdictions restricting such activity; consult counsel.
+
+MEV strategies can have regulatory implications depending on venue/behavior.
+
+Maintain audit logs and configuration hashes for every deploy.
+
+✅ Final Checklist (Go‑Live)
+
+
+
+You’re clear for live. Keep one eye on Grafana, one hand on the kill‑switch, and log everything. Profit is a process, not a fluke.
