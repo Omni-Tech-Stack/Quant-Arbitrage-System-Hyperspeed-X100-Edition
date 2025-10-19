@@ -2,6 +2,22 @@
 
 ---
 
+## 📊 NEW: Complete ASL Diagram Available!
+
+**Want to understand how every file works together?** Check out our new comprehensive [ASL (Architecture System Layout) Diagram](ASL_DIAGRAM.md)!
+
+This diagram provides:
+- ✅ **Complete file mapping** - Every single file's role in operations
+- ✅ **End-to-end flow visualization** - See how data flows through the system
+- ✅ **Phase-by-phase breakdown** - 12 operational phases explained
+- ✅ **Dependency graphs** - Understand file relationships
+- ✅ **Quick file finder** - Locate any file instantly
+- ✅ **Learning path** - Recommended reading order for new developers
+
+**[📖 View the Complete ASL Diagram →](ASL_DIAGRAM.md)**
+
+---
+
 ## ⚡ ONE-CLICK INSTALLATION & DEPLOYMENT
 
 ### Quick Install (New!)
