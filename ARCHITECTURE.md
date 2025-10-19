@@ -668,6 +668,7 @@ The Quant Arbitrage System is designed as a **unified, modular, production-ready
 
 For more information, see:
 - [README.md](../README.md) - System overview
+- [ASL_DIAGRAM.md](../ASL_DIAGRAM.md) - Complete ASL diagram with file-by-file mapping
 - [INSTALL.md](../INSTALL.md) - Installation guide
 - [DEPLOYMENT.md](../DEPLOYMENT.md) - Deployment guide
 - [TESTING.md](../TESTING.md) - Testing guide
