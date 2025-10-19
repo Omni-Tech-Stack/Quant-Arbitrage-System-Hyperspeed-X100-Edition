@@ -164,22 +164,22 @@ This document provides comprehensive test coverage for the Quant Arbitrage Syste
 
 ### Run All Tests
 ```bash
-python3 tests/run_all_tests.py
+python tests/run_all_tests.py
 ```
 
 ### Run Individual Test Suites
 ```bash
 # Pool Registry tests
-python3 tests/test_pool_registry.py
+python tests/test_pool_registry.py
 
 # Opportunity Detector tests
-python3 tests/test_opportunity_detector.py
+python tests/test_opportunity_detector.py
 
 # TVL Fetcher tests
-python3 tests/test_tvl_fetchers.py
+python tests/test_tvl_fetchers.py
 
 # Core Module tests
-python3 tests/test_core_modules.py
+python tests/test_core_modules.py
 ```
 
 ## Feature Validation Matrix

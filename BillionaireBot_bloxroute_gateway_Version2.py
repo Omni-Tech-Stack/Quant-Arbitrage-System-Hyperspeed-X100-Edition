@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 MEV Protection Gateway
 Private relay integration (Bloxroute, Flashbots, Eden)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Hyperspeed X100 Hybrid Orchestrator
 - Automated, cross-chain, modular, MEV-protected arbitrage system

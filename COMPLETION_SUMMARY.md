@@ -172,7 +172,7 @@ $ cd backend && npm test
 
 #### Main Orchestrator Test
 ```bash
-$ python3 main_quant_hybrid_orchestrator.py --test
+$ python main_quant_hybrid_orchestrator.py --test
 ✓ JS pool fetcher: Fetched 1843 pools
 ✓ SDK pool loader: Loaded 41 deep pools
 ✓ DEX protocol precheck: All contracts valid
@@ -184,7 +184,7 @@ $ python3 main_quant_hybrid_orchestrator.py --test
 
 #### TVL Orchestrator Test
 ```bash
-$ python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
+$ python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 ✓ Parallel TVL fetch completed
 ✓ 2 chains processed
 ✓ Global: $0.00 across 0 pools (stub data)
@@ -299,8 +299,8 @@ All items from README now implemented:
 - [x] `node verify-all-modules.js`
 - [x] `npm run verify`
 - [x] `./deploy.sh`
-- [x] `python3 main_quant_hybrid_orchestrator.py --test`
-- [x] `python3 orchestrator_tvl_hyperspeed.py`
+- [x] `python main_quant_hybrid_orchestrator.py --test`
+- [x] `python orchestrator_tvl_hyperspeed.py`
 - [x] `node dex_pool_fetcher.js`
 - [x] `node sdk_pool_loader.js`
 - [x] All test script commands
@@ -359,7 +359,7 @@ npm run pool:sdk
 npm run orchestrator:test
 
 # Production mode
-python3 main_quant_hybrid_orchestrator.py
+python main_quant_hybrid_orchestrator.py
 ```
 
 ### Deploy System

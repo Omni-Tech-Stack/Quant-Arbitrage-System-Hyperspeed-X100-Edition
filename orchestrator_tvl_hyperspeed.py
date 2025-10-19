@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Parallel TVL Fetching & Real-Time Analytics Orchestrator
 Event-driven, multi-threaded Python orchestrator fetching TVL and pool analytics

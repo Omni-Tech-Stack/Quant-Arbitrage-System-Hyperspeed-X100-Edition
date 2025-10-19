@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Model Training Script for Dual AI System
 Trains superior models on historical arbitrage data

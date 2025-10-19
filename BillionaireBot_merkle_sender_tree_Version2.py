@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Merkle Reward Distributor
 Batch reward/airdrop distribution using Merkle proofs

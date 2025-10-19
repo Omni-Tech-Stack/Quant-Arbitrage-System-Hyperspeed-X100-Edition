@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Full pipeline simulation tests"""
 import sys
 import os

@@ -73,22 +73,22 @@ npm run tvl:fetch
 npm run orchestrator:test
 
 # Run TVL orchestrator (one-time fetch)
-python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
+python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 
 # Run TVL orchestrator (continuous mode)
-python3 orchestrator_tvl_hyperspeed.py --interval 60 --chains ethereum polygon bsc
+python orchestrator_tvl_hyperspeed.py --interval 60 --chains ethereum polygon bsc
 ```
 
 ### Test Scripts
 
 ```bash
 # Run all test scripts
-python3 scripts/test_simulation.py
-python3 scripts/backtesting.py
-python3 scripts/monitoring.py
-python3 scripts/test_registry_integrity.py
-python3 scripts/test_opportunity_detector.py
-python3 scripts/test_merkle_sender.py
+python scripts/test_simulation.py
+python scripts/backtesting.py
+python scripts/monitoring.py
+python scripts/test_registry_integrity.py
+python scripts/test_opportunity_detector.py
+python scripts/test_merkle_sender.py
 ```
 
 ---
@@ -105,7 +105,7 @@ npm start
 
 # In another terminal, start frontend dashboard
 cd frontend
-python3 -m http.server 3000
+python -m http.server 3000
 # Dashboard available at http://localhost:3000
 ```
 
@@ -163,7 +163,7 @@ Real-time dashboard displaying opportunities, trades, and statistics.
 ```bash
 cd frontend
 # Serve with any HTTP server
-python3 -m http.server 3000
+python -m http.server 3000
 ```
 
 ### 3. Ultra-Fast Arbitrage Engine
@@ -202,10 +202,10 @@ Hybrid Python + Node.js orchestrator for complete arbitrage workflow.
 **Run Orchestrator:**
 ```bash
 # Test mode (validate all components)
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 
 # Production mode (requires configuration)
-python3 main_quant_hybrid_orchestrator.py
+python main_quant_hybrid_orchestrator.py
 ```
 
 ---
@@ -266,7 +266,7 @@ tail -f logs/*.log
 
 ```bash
 # Python monitoring script
-python3 scripts/monitoring.py
+python scripts/monitoring.py
 
 # Backend API health
 curl http://localhost:3001/api/health
@@ -295,14 +295,14 @@ npm run verify:backend      # Backend API
 
 ```bash
 # Run backtest on historical data
-python3 scripts/backtesting.py
+python scripts/backtesting.py
 ```
 
 ### Simulation
 
 ```bash
 # Run full pipeline simulation
-python3 scripts/test_simulation.py
+python scripts/test_simulation.py
 ```
 
 ---
@@ -336,7 +336,7 @@ Ensure you're running from the root directory:
 
 ```bash
 cd /path/to/Quant-Arbitrage-System-Hyperspeed-X100-Edition
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ```
 
 ### Backend Test Failures
@@ -380,7 +380,7 @@ npm run build:rust
 2. ✅ Fetch pool data: `npm run pool:fetch`
 3. ✅ Test orchestrator: `npm run orchestrator:test`
 4. ✅ Start backend: `cd backend && npm start`
-5. ✅ Start frontend: `cd frontend && python3 -m http.server 3000`
+5. ✅ Start frontend: `cd frontend && python -m http.server 3000`
 6. ✅ Deploy: `./deploy.sh`
 
 **Happy Trading! 🚀**

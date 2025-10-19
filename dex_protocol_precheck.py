@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 DEX/Protocol Precheck
 Validates contracts, routers, ABIs, ERC20 balances, and protocol liveness

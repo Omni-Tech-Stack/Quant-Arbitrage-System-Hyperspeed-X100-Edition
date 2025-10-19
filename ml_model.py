@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 ML Model Definition
 Arbitrage opportunity scoring model

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Pool Registry Integrator
 High-performance, in-memory graph for sub-millisecond pathfinding

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Test Merkle sender"""
 import sys
 sys.path.insert(0, '..')

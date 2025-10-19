@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Unit tests for remaining core modules
 Tests MEV relay, Merkle distribution, Analytics, and Protocol precheck

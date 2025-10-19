@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Arbitrage Request Encoder
 Encodes arbitrage transactions for atomic, all-or-nothing execution

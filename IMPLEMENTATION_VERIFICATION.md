@@ -42,7 +42,7 @@ All Python modules described in README Section "Unified Hybrid Orchestrator" are
 
 **Test Result:**
 ```bash
-$ python3 main_quant_hybrid_orchestrator.py --test
+$ python main_quant_hybrid_orchestrator.py --test
 ✓ All components initialized successfully
 ✓ System ready for production deployment
 ```
@@ -59,7 +59,7 @@ $ python3 main_quant_hybrid_orchestrator.py --test
 
 **Test Result:**
 ```bash
-$ python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
+$ python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 ✓ TVL fetch completed successfully
 ```
 
@@ -76,7 +76,7 @@ $ python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 
 **Test Result:**
 ```bash
-$ python3 pool_registry_integrator.py pool_registry.json
+$ python pool_registry_integrator.py pool_registry.json
 ✓ Built graph: 3686 tokens, 3686 edges (1.9ms)
 ```
 
@@ -224,7 +224,7 @@ $ node sdk_pool_loader.js
 
 **Combined Test Results:**
 ```bash
-$ for script in scripts/*.py; do python3 $script; done
+$ for script in scripts/*.py; do python $script; done
 ✅ All 6 test scripts passed
 ```
 
@@ -318,7 +318,7 @@ The existing backend API remains fully functional:
 
 **Test Command:**
 ```bash
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ```
 
 **Test Flow:**
@@ -342,24 +342,24 @@ All commands mentioned in the README now work correctly:
 ### Python Commands
 ```bash
 # Main orchestrator test
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ✅ Working
 
 # TVL orchestrator
-python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
+python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 ✅ Working
 
 # Pool registry test
-python3 pool_registry_integrator.py pool_registry.json
+python pool_registry_integrator.py pool_registry.json
 ✅ Working
 
 # Individual test scripts
-python3 scripts/test_simulation.py
-python3 scripts/backtesting.py
-python3 scripts/monitoring.py
-python3 scripts/test_registry_integrity.py
-python3 scripts/test_opportunity_detector.py
-python3 scripts/test_merkle_sender.py
+python scripts/test_simulation.py
+python scripts/backtesting.py
+python scripts/monitoring.py
+python scripts/test_registry_integrity.py
+python scripts/test_opportunity_detector.py
+python scripts/test_merkle_sender.py
 ✅ All working
 ```
 

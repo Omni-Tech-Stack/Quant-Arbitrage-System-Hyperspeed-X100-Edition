@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Historic strategy backtesting"""
 import sys
 sys.path.insert(0, '..')

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Unit tests for TVL Fetchers
 Tests parallel TVL fetching and real-time analytics

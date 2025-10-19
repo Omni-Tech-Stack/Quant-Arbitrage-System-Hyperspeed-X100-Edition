@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Master Test Runner
 Runs all test suites and generates comprehensive report

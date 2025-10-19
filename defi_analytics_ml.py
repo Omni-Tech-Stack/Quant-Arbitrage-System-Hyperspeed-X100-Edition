@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 DeFi Analytics & ML Engine
 Adaptive, continuous ML retraining on live/historical data
@@ -170,7 +170,7 @@ class MLAnalyticsEngine:
                 self.model = None
         else:
             print(f"[ML] ⚠ Model not found at {self.model_path}")
-            print(f"[ML] ℹ Run 'python3 train_ml_model.py' to create model")
+            print(f"[ML] ℹ Run 'python train_ml_model.py' to create model")
     
     def score_opportunities(self, opportunities):
         """

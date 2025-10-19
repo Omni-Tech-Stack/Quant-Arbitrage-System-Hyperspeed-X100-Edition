@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Dual AI ML Engine - Superior Models with ONNX Integration
 Combines traditional ML (XGBoost/Random Forest) with ONNX-optimized inference

@@ -165,19 +165,19 @@ The dual AI system seamlessly integrates with the existing orchestrator:
 ### Training Models
 ```bash
 # Train with validation
-python3 train_dual_ai_models.py --samples 1000 --validate
+python train_dual_ai_models.py --samples 1000 --validate
 
 # Train on historical data
-python3 train_dual_ai_models.py --data-source historical
+python train_dual_ai_models.py --data-source historical
 ```
 
 ### Testing
 ```bash
 # Run comprehensive tests
-python3 test_dual_ai_system.py
+python test_dual_ai_system.py
 
 # Test with orchestrator
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ```
 
 ### Production Use

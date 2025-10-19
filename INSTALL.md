@@ -52,7 +52,7 @@ The setup script will check for these automatically, but you need to have them i
   - Verify: `npm --version`
 - **Python** (v3.8 or higher)
   - Download: https://www.python.org/
-  - Verify: `python3 --version`
+  - Verify: `python --version`
 - **pip** (comes with Python)
   - Verify: `pip3 --version`
 
@@ -172,10 +172,10 @@ vim ultra-fast-arbitrage-engine/.env
 
 ```bash
 # Train basic ML model
-python3 train_ml_model.py
+python train_ml_model.py
 
 # Train dual AI models (advanced)
-python3 train_dual_ai_models.py --samples 1000 --validate
+python train_dual_ai_models.py --samples 1000 --validate
 ```
 
 ### 3. Fetch Initial Data
@@ -207,7 +207,7 @@ npm start
 
 # Terminal 2 - Start frontend dashboard
 cd frontend
-python3 -m http.server 3000
+python -m http.server 3000
 # Dashboard running at http://localhost:3000
 ```
 
@@ -301,9 +301,9 @@ npm test
 - Install Node.js from https://nodejs.org/
 - Ensure it's in your PATH
 
-**"Command not found: python3"**
+**"Command not found: python"**
 - Install Python 3.8+ from https://www.python.org/
-- On some systems, use `python` instead of `python3`
+- On some systems, use `python` instead of `python`
 
 **"Permission denied: ./setup.sh"**
 ```bash
@@ -320,7 +320,7 @@ chmod +x setup.sh
 - Upgrade pip: `pip3 install --upgrade pip`
 - Use virtual environment:
   ```bash
-  python3 -m venv venv
+  python -m venv venv
   source venv/bin/activate  # On Windows: venv\Scripts\activate
   pip install -r requirements.txt
   ```
@@ -509,7 +509,7 @@ After successful installation:
 
 1. ✅ **Verify:** `npm run verify`
 2. ✅ **Configure:** Edit `config/config.py`
-3. ✅ **Train Models:** `python3 train_ml_model.py`
+3. ✅ **Train Models:** `python train_ml_model.py`
 4. ✅ **Fetch Data:** `npm run pool:fetch`
 5. ✅ **Deploy:** `./deploy.sh`
 6. ✅ **Monitor:** Open http://localhost:3000

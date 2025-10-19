@@ -358,7 +358,7 @@ The system includes a **pre-trained ML model** for arbitrage opportunity scoring
 The ML model implementation is available in `ml_model.py`:
 
 ```python name=ml_model.py
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 ML Model Definition - Arbitrage Opportunity Scoring Model
 """
@@ -440,7 +440,7 @@ The model is **already pre-trained** and included in the repository. To retrain 
 
 ```bash
 # Retrain the model with synthetic historical data
-python3 train_ml_model.py
+python train_ml_model.py
 ```
 
 **Training Output:**
@@ -584,13 +584,13 @@ pip install -r requirements.txt
 # pip install numpy pandas scikit-learn joblib xgboost onnx>=1.17.0 onnxruntime skl2onnx
 
 # Train dual AI models (XGBoost + ONNX)
-python3 train_dual_ai_models.py --samples 1000 --validate
+python train_dual_ai_models.py --samples 1000 --validate
 
 # Run comprehensive test suite
-python3 test_dual_ai_system.py
+python test_dual_ai_system.py
 
 # Test with orchestrator
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ```
 
 **Expected Results:**
