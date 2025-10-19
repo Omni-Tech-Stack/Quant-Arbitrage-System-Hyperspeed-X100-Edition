@@ -13,7 +13,8 @@ const nativePath = path.join(__dirname, '..', 'native', 'math_engine.node');
 if (fs.existsSync(nativePath)) {
   native = require(nativePath);
 } else {
-  // Fallback JavaScript implementation for when Rust native module is not built
+  // Fallback JavaScript implementation for when Rust native module is not built.
+  // WARNING: This fallback is 10-100x slower than the native Rust implementation.
   native = require(path.join(__dirname, '..', 'native', 'math_engine_fallback.js'));
 }
 
