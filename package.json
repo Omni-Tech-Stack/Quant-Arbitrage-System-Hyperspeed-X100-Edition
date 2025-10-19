@@ -18,6 +18,7 @@
     "verify:all": "npm run verify:system && npm run verify",
     "build:all": "cd ultra-fast-arbitrage-engine && npm run build && cd ..",
     "build:rust": "cd ultra-fast-arbitrage-engine && npm run build:rust && cd ..",
+    "test": "npm run test:comprehensive",
     "test:all": "npm run test:comprehensive",
     "test:python": "./test_all_python_modules.sh",
     "test:js": "./test_all_js_modules.sh",
