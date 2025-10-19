@@ -747,6 +747,7 @@ jobs:
 ### Core Documentation
 - **[README.md](README.md)** - This file - System overview and features
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - 🏗️ System architecture and design
+- **[ASL_DIAGRAM.md](ASL_DIAGRAM.md)** - 📊 **Complete ASL Diagram** - Every file's role in end-to-end operations
 - **[TESTING.md](TESTING.md)** - Testing guide and test suites
 - **[SECURITY.md](SECURITY.md)** - Security best practices and guidelines
 
