@@ -577,8 +577,11 @@ if __name__ == "__main__":
 
 **Quick Start - Train and Test Superior Models:**
 ```bash
-# Install ML dependencies
-pip install numpy pandas scikit-learn joblib xgboost onnx>=1.17.0 onnxruntime skl2onnx
+# Install ALL dependencies (recommended)
+pip install -r requirements.txt
+
+# OR install only ML dependencies if you prefer
+# pip install numpy pandas scikit-learn joblib xgboost onnx>=1.17.0 onnxruntime skl2onnx
 
 # Train dual AI models (XGBoost + ONNX)
 python3 train_dual_ai_models.py --samples 1000 --validate
