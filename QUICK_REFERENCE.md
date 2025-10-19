@@ -52,7 +52,7 @@ npm run deploy
 cd backend && npm start
 
 # Development mode - Frontend
-cd frontend && python3 -m http.server 3000
+cd frontend && python -m http.server 3000
 ```
 
 ---
@@ -79,13 +79,13 @@ npm run tvl:fetch
 npm run orchestrator:test
 
 # Run orchestrator (production)
-python3 main_quant_hybrid_orchestrator.py
+python main_quant_hybrid_orchestrator.py
 
 # TVL orchestrator (once)
-python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
+python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon
 
 # TVL orchestrator (continuous)
-python3 orchestrator_tvl_hyperspeed.py --interval 60 --chains ethereum polygon bsc
+python orchestrator_tvl_hyperspeed.py --interval 60 --chains ethereum polygon bsc
 ```
 
 ---
@@ -94,13 +94,13 @@ python3 orchestrator_tvl_hyperspeed.py --interval 60 --chains ethereum polygon b
 
 ```bash
 # Train basic ML model
-python3 train_ml_model.py
+python train_ml_model.py
 
 # Train dual AI models
-python3 train_dual_ai_models.py --samples 1000 --validate
+python train_dual_ai_models.py --samples 1000 --validate
 
 # Test dual AI system
-python3 test_dual_ai_system.py
+python test_dual_ai_system.py
 ```
 
 ---
@@ -234,7 +234,7 @@ tail -f logs/system.log
 
 # Test individual components
 node dex_pool_fetcher.js
-python3 pool_registry_integrator.py pool_registry.json
+python pool_registry_integrator.py pool_registry.json
 ```
 
 ---

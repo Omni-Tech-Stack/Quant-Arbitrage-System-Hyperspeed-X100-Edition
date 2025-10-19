@@ -8,7 +8,7 @@ success=0
 failed=0
 
 echo "Testing: main_quant_hybrid_orchestrator.py"
-if python3 main_quant_hybrid_orchestrator.py --test > /dev/null 2>&1; then
+if python main_quant_hybrid_orchestrator.py --test > /dev/null 2>&1; then
     echo "✓ Main orchestrator: PASS"
     ((success++))
 else
@@ -17,7 +17,7 @@ else
 fi
 
 echo "Testing: orchestrator_tvl_hyperspeed.py"
-if python3 orchestrator_tvl_hyperspeed.py --once --chains ethereum > /dev/null 2>&1; then
+if python orchestrator_tvl_hyperspeed.py --once --chains ethereum > /dev/null 2>&1; then
     echo "✓ TVL orchestrator: PASS"
     ((success++))
 else
@@ -26,7 +26,7 @@ else
 fi
 
 echo "Testing: pool_registry_integrator.py"
-if python3 pool_registry_integrator.py pool_registry.json > /dev/null 2>&1; then
+if python pool_registry_integrator.py pool_registry.json > /dev/null 2>&1; then
     echo "✓ Pool registry integrator: PASS"
     ((success++))
 else
@@ -35,7 +35,7 @@ else
 fi
 
 echo "Testing: scripts/test_simulation.py"
-if python3 scripts/test_simulation.py > /dev/null 2>&1; then
+if python scripts/test_simulation.py > /dev/null 2>&1; then
     echo "✓ Test simulation: PASS"
     ((success++))
 else
@@ -44,7 +44,7 @@ else
 fi
 
 echo "Testing: scripts/backtesting.py"
-if python3 scripts/backtesting.py > /dev/null 2>&1; then
+if python scripts/backtesting.py > /dev/null 2>&1; then
     echo "✓ Backtesting: PASS"
     ((success++))
 else
@@ -53,7 +53,7 @@ else
 fi
 
 echo "Testing: scripts/monitoring.py"
-if python3 scripts/monitoring.py > /dev/null 2>&1; then
+if python scripts/monitoring.py > /dev/null 2>&1; then
     echo "✓ Monitoring: PASS"
     ((success++))
 else

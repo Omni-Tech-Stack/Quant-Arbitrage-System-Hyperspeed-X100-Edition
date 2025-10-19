@@ -116,8 +116,8 @@ check_prerequisites() {
     
     # Check Python
     print_step "Checking Python..."
-    if command_exists python3; then
-        local python_version=$(python3 --version | awk '{print $2}')
+    if command_exists python; then
+        local python_version=$(python --version | awk '{print $2}')
         if version_ge "$python_version" "$PYTHON_MIN_VERSION"; then
             print_success "Python $python_version installed (>= $PYTHON_MIN_VERSION required)"
         else
@@ -325,7 +325,7 @@ verify_installation() {
     if [ -f "models/arb_ml_latest.pkl" ] || [ -f "models/xgboost_primary.pkl" ]; then
         print_success "ML models are available"
     else
-        print_info "ML models not found - run 'python3 train_ml_model.py' to train models"
+        print_info "ML models not found - run 'python train_ml_model.py' to train models"
     fi
     
     echo ""
@@ -354,14 +354,14 @@ show_next_steps() {
     echo ""
     
     echo -e "${YELLOW}3. Train ML models (if needed):${NC}"
-    echo "   python3 train_ml_model.py"
-    echo "   python3 train_dual_ai_models.py"
+    echo "   python train_ml_model.py"
+    echo "   python train_dual_ai_models.py"
     echo ""
     
     echo -e "${YELLOW}4. Deploy the system:${NC}"
     echo "   a) Development mode:"
     echo "      cd backend && npm start     # Start backend API"
-    echo "      cd frontend && python3 -m http.server 3000  # Start dashboard"
+    echo "      cd frontend && python -m http.server 3000  # Start dashboard"
     echo ""
     echo "   b) Production mode (Docker):"
     echo "      ./deploy.sh                 # One-click Docker deployment"

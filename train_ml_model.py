@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 ML Model Training Script
 Pre-trains an arbitrage opportunity scoring model using synthetic historical data

@@ -86,8 +86,8 @@ check_runtime_environment() {
     fi
     
     # Python
-    if command_exists python3; then
-        local python_version=$(python3 --version)
+    if command_exists python; then
+        local python_version=$(python --version)
         check_pass "Python installed: $python_version"
     else
         check_fail "Python 3 not installed"
@@ -171,7 +171,7 @@ check_python_modules() {
     
     # Check if Python modules can be imported
     check_info "Checking Python module imports..."
-    python3 -c "import sys; sys.path.insert(0, '.'); import config.config" 2>/dev/null && check_pass "config module importable" || check_warn "config module cannot be imported - verify config/config.py exists and has no syntax errors"
+    python -c "import sys; sys.path.insert(0, '.'); import config.config" 2>/dev/null && check_pass "config module importable" || check_warn "config module cannot be imported - verify config/config.py exists and has no syntax errors"
 }
 
 check_javascript_modules() {
@@ -216,9 +216,9 @@ check_dependencies() {
     
     # Check Python packages
     check_info "Checking Python packages..."
-    python3 -c "import pandas" 2>/dev/null && check_pass "pandas installed" || check_warn "pandas not installed - run: pip3 install -r requirements.txt"
-    python3 -c "import numpy" 2>/dev/null && check_pass "numpy installed" || check_warn "numpy not installed - run: pip3 install -r requirements.txt"
-    python3 -c "import sklearn" 2>/dev/null && check_pass "scikit-learn installed" || check_warn "scikit-learn not installed - run: pip3 install -r requirements.txt"
+    python -c "import pandas" 2>/dev/null && check_pass "pandas installed" || check_warn "pandas not installed - run: pip3 install -r requirements.txt"
+    python -c "import numpy" 2>/dev/null && check_pass "numpy installed" || check_warn "numpy not installed - run: pip3 install -r requirements.txt"
+    python -c "import sklearn" 2>/dev/null && check_pass "scikit-learn installed" || check_warn "scikit-learn not installed - run: pip3 install -r requirements.txt"
 }
 
 check_configuration() {

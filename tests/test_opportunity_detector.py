@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Unit tests for Opportunity Detector
 Tests ML-powered arbitrage opportunity detection and scoring

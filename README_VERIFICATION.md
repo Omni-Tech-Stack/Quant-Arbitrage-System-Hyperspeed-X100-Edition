@@ -400,22 +400,22 @@ The README shows configuration validation. Our implementation provides:
 
 ### Run Complete Test Suite
 ```bash
-python3 tests/run_all_tests.py
+python tests/run_all_tests.py
 ```
 
 ### Run Individual Module Tests
 ```bash
-python3 tests/test_pool_registry.py
-python3 tests/test_opportunity_detector.py
-python3 tests/test_tvl_fetchers.py
-python3 tests/test_core_modules.py
+python tests/test_pool_registry.py
+python tests/test_opportunity_detector.py
+python tests/test_tvl_fetchers.py
+python tests/test_core_modules.py
 ```
 
 ### Run Legacy Test Scripts
 ```bash
-python3 scripts/test_simulation.py
-python3 scripts/test_registry_integrity.py
-python3 scripts/test_opportunity_detector.py
+python scripts/test_simulation.py
+python scripts/test_registry_integrity.py
+python scripts/test_opportunity_detector.py
 ```
 
 ---

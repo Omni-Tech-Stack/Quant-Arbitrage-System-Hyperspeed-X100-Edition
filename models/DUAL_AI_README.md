@@ -53,13 +53,13 @@ pip install numpy pandas scikit-learn joblib xgboost onnx>=1.17.0 onnxruntime sk
 ### Quick Start
 ```bash
 # Train the models
-python3 train_dual_ai_models.py --validate
+python train_dual_ai_models.py --validate
 
 # Test the system
-python3 test_dual_ai_system.py
+python test_dual_ai_system.py
 
 # Use in orchestrator
-python3 main_quant_hybrid_orchestrator.py --test
+python main_quant_hybrid_orchestrator.py --test
 ```
 
 ## Usage
@@ -68,12 +68,12 @@ python3 main_quant_hybrid_orchestrator.py --test
 
 Train models on synthetic data:
 ```bash
-python3 train_dual_ai_models.py --samples 1000 --validate
+python train_dual_ai_models.py --samples 1000 --validate
 ```
 
 Train on historical data (when available):
 ```bash
-python3 train_dual_ai_models.py --data-source historical --validate
+python train_dual_ai_models.py --data-source historical --validate
 ```
 
 ### Using Dual AI in Code
@@ -250,7 +250,7 @@ The system supports continuous learning through:
 ### Retraining Schedule
 ```bash
 # Weekly retraining recommended
-0 0 * * 0 cd /path/to/system && python3 train_dual_ai_models.py --data-source auto
+0 0 * * 0 cd /path/to/system && python train_dual_ai_models.py --data-source auto
 ```
 
 ## Security
@@ -267,16 +267,16 @@ The system supports continuous learning through:
 ### Models Not Loading
 ```bash
 # Retrain models
-python3 train_dual_ai_models.py --samples 1000
+python train_dual_ai_models.py --samples 1000
 ```
 
 ### Low Accuracy
 ```bash
 # Train with more data
-python3 train_dual_ai_models.py --samples 5000 --validate
+python train_dual_ai_models.py --samples 5000 --validate
 
 # Use historical data
-python3 train_dual_ai_models.py --data-source historical
+python train_dual_ai_models.py --data-source historical
 ```
 
 ### ONNX Import Error
@@ -396,6 +396,6 @@ MIT License - See main repository for details
 ## Support
 
 For issues or questions:
-1. Check test output: `python3 test_dual_ai_system.py`
+1. Check test output: `python test_dual_ai_system.py`
 2. Review logs in `models/trade_log.jsonl`
 3. Open an issue on GitHub with test results

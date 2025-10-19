@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Advanced Opportunity Detection - Version 1
 Simulates all routes, models slippage/gas/liquidity, and scores opportunities via ML

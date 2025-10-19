@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Unit tests for Pool Registry Integrator
 Tests dynamic cross-chain pool discovery and registry management

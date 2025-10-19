@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Comprehensive test suite for Dual AI ML system
 Tests both primary and ONNX models, inference speed, and accuracy
