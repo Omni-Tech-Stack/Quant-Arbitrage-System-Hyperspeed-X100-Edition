@@ -70,3 +70,4 @@ __pycache__/
 # Model files (large binary)
 models/*.pkl
 !models/README.md
+coverage/

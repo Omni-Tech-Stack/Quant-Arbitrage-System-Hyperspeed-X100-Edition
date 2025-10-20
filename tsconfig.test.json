@@ -1,0 +1,21 @@
+{
+  "extends": "./ultra-fast-arbitrage-engine/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "types": ["jest", "node"]
+  },
+  "include": ["tests/**/*", "ultra-fast-arbitrage-engine/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
