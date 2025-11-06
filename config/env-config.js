@@ -115,8 +115,8 @@ class EnvironmentConfig {
       postgres: {
         host: this.config.POSTGRES_HOST || 'localhost',
         port: parseInt(this.config.POSTGRES_PORT || '5432'),
-        database: this.config.POSTGRES_DB || 'omtegrate',
-        user: this.config.POSTGRES_USER || 'omtegrate_user',
+        database: this.config.POSTGRES_DB || 'arbitrage_db',
+        user: this.config.POSTGRES_USER || 'arbitrage_user',
         password: this.config.POSTGRES_PASSWORD || ''
       },
       redis: {
