@@ -59,6 +59,10 @@ class FlashLoanRiskManager:
     - Position size optimization
     """
     
+    # Historical tracking configuration
+    HISTORICAL_WINDOW_SIZE = 100  # Number of recent attempts to consider
+    MAX_HISTORY_SIZE = 1000  # Maximum history records to keep
+    
     # Flash loan size categories (USD)
     LOAN_SIZE_CATEGORIES = {
         'small': {'min': 0, 'max': 50000},
@@ -212,9 +216,11 @@ class FlashLoanRiskManager:
             return False, "Invalid pool liquidity"
         
         utilization = loan_amount_usd / pool_liquidity_usd
+        utilization_pct = utilization * 100
+        max_utilization_pct = max_utilization * 100
         
         if utilization > max_utilization:
-            return False, f"Position size {utilization*100:.1f}% exceeds max {max_utilization*100:.1f}%"
+            return False, f"Position size {utilization_pct:.1f}% exceeds max {max_utilization_pct:.1f}%"
         
         return True, "Position size acceptable"
     
@@ -402,7 +408,7 @@ class FlashLoanRiskManager:
         if not self.historical_failures:
             return 0.4  # Default baseline failure rate (60% success)
         
-        recent_window = self.historical_failures[-100:]  # Last 100 attempts
+        recent_window = self.historical_failures[-self.HISTORICAL_WINDOW_SIZE:]  # Last N attempts
         if not recent_window:
             return 0.4
             
@@ -424,11 +430,11 @@ class FlashLoanRiskManager:
             'timestamp': datetime.now()
         })
         
-        # Keep only last 1000 records to prevent memory bloat
-        if len(self.historical_failures) > 1000:
-            self.historical_failures = self.historical_failures[-1000:]
-        if len(self.risk_metrics_history) > 1000:
-            self.risk_metrics_history = self.risk_metrics_history[-1000:]
+        # Keep only last N records to prevent memory bloat
+        if len(self.historical_failures) > self.MAX_HISTORY_SIZE:
+            self.historical_failures = self.historical_failures[-self.MAX_HISTORY_SIZE:]
+        if len(self.risk_metrics_history) > self.MAX_HISTORY_SIZE:
+            self.risk_metrics_history = self.risk_metrics_history[-self.MAX_HISTORY_SIZE:]
     
     def get_gas_cost_multiplier(self, loan_amount_usd: float) -> float:
         """

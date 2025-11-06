@@ -7,5 +7,5 @@ BLOXROUTE_AUTH_HEADER = "MTU1MGZiYmEtNDdiNS00YzA3LTg4NTAtZGVjN2Q4YWU5MDY5OmVhMGV
 
 # bloXroute API endpoints
 BLOXROUTE_BDN_API_URL = "https://api.blxrbdn.com"
-BLOXROUTE_RELAY_API_URL = BLOXROUTE_BDN_API_URL  # Alias for compatibility
+BLOXROUTE_RELAY_API_URL = BLOXROUTE_BDN_API_URL  # Alias for backward compatibility with bloxroute_real_gateway imports
 BLOXROUTE_SUBMIT_BUNDLE_ENDPOINT = f"{BLOXROUTE_BDN_API_URL}/api/v2/submit-bundle"
