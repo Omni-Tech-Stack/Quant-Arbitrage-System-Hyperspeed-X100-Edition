@@ -193,8 +193,8 @@ class MEVIntegration {
     const relay = this.relays.get('BLOXROUTE');
 
     try {
-      // Bloxroute BDN endpoint
-      const endpoint = 'https://api.blxrbdn.com/transaction';
+      // Bloxroute BDN endpoint (configurable via environment)
+      const endpoint = process.env.BLOXROUTE_ENDPOINT || 'https://api.blxrbdn.com/transaction';
       
       const response = await axios.post(
         endpoint,
@@ -232,8 +232,8 @@ class MEVIntegration {
     const relay = this.relays.get('MERKLE');
 
     try {
-      // Merkle API endpoint (example - adjust based on actual API)
-      const endpoint = 'https://api.merkle.io/v1/transaction';
+      // Merkle API endpoint (configurable via environment)
+      const endpoint = process.env.MERKLE_ENDPOINT || 'https://api.merkle.io/v1/transaction';
       
       const response = await axios.post(
         endpoint,
@@ -318,6 +318,9 @@ class MEVIntegration {
 
     const relay = this.relays.get('PRIVATE_MEMPOOLS');
     const results = [];
+    
+    // Configurable timeout (default 5 seconds)
+    const timeout = parseInt(process.env.PRIVATE_MEMPOOL_TIMEOUT || '5000');
 
     for (const url of relay.urls) {
       try {
@@ -330,7 +333,7 @@ class MEVIntegration {
 
         const response = await axios.post(url, params, {
           headers: { 'Content-Type': 'application/json' },
-          timeout: 5000 // 5 second timeout per mempool
+          timeout // Configurable timeout per mempool
         });
 
         if (response.data.result) {

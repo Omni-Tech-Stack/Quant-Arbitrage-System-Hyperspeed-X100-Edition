@@ -237,6 +237,7 @@ await notificationIntegration.test();
 ### Network Configuration
 - `CHAIN_ID` - Primary chain ID (default: 137 for Polygon)
 - `MULTI_CHAIN_ENABLED` - Enable multi-chain support (true/false)
+- `RPC_PROVIDER_PRIORITY` - Comma-separated provider priority (optional, default: "infura,alchemy,quicknode,https,wss")
 
 ### Wallet Configuration
 - `EXECUTOR_PRIVATE_KEY` - Private key for transaction signing
@@ -255,9 +256,12 @@ await notificationIntegration.test();
 ### MEV Configuration
 - `FLASHBOTS_RELAY_URL` - Flashbots relay endpoint
 - `BLOXROUTE_AUTH_HEADER` - bloXroute authentication header
+- `BLOXROUTE_ENDPOINT` - bloXroute API endpoint (optional, default: https://api.blxrbdn.com/transaction)
 - `MERKLE_API_KEY` - Merkle API key
+- `MERKLE_ENDPOINT` - Merkle API endpoint (optional, default: https://api.merkle.io/v1/transaction)
 - `EDEN_ENDPOINT` - Eden Network endpoint
 - `PRIVATE_MEMPOOL_URLS` - Comma-separated private mempool URLs
+- `PRIVATE_MEMPOOL_TIMEOUT` - Timeout for private mempool submissions in ms (optional, default: 5000)
 - `MEV_SHARE_ENABLED` - Enable MEV-Share (true/false)
 
 ### Database Configuration
@@ -315,6 +319,45 @@ await notificationIntegration.test();
 - `POLYGON_MAINNET_WSS_QUICKNODE` - Polygon QuickNode WSS endpoint
 
 *Similar patterns exist for all 59 supported chains*
+
+## Advanced Configuration
+
+### RPC Provider Priority
+
+You can customize which RPC provider is preferred when multiple endpoints are available:
+
+```bash
+# In .env
+RPC_PROVIDER_PRIORITY=quicknode,alchemy,infura,https,wss
+```
+
+This prioritizes QuickNode over Alchemy, then Infura, then any HTTPS, and finally WSS endpoints.
+
+### MEV Relay Endpoints
+
+Customize MEV relay API endpoints for different environments:
+
+```bash
+# bloXroute endpoint (production default if not set)
+BLOXROUTE_ENDPOINT=https://api.blxrbdn.com/transaction
+
+# Merkle endpoint (example - adjust for actual API)
+MERKLE_ENDPOINT=https://api.merkle.io/v1/transaction
+
+# Private mempool timeout in milliseconds
+PRIVATE_MEMPOOL_TIMEOUT=5000
+```
+
+### Custom Chain Configuration
+
+To add support for a custom chain or modify chain IDs:
+
+```javascript
+const { multiChainProvider } = require('./config');
+
+// Chain IDs are configured in multi-chain-provider.js
+// Default mapping can be overridden programmatically if needed
+```
 
 ## Quick Start
 

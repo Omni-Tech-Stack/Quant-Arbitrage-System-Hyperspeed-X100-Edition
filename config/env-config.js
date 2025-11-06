@@ -31,10 +31,12 @@ class EnvironmentConfig {
         // Skip comments and empty lines
         if (line.trim().startsWith('#') || !line.trim()) continue;
 
-        // Match VAR_NAME=value or ## VAR_NAME=value (escaped underscores)
+        // Match VAR_NAME=value or ## VAR_NAME=value
+        // Note: The .env file contains escaped underscores (e.g., ETHEREUM\_MAINNET)
+        // due to markdown formatting. We need to unescape them for proper variable names.
         const match = line.match(/^#*\s*([A-Z][A-Z0-9_\\]*)\s*=\s*(.*)$/);
         if (match) {
-          const key = match[1].replace(/\\_/g, '_'); // Unescape underscores
+          const key = match[1].replace(/\\_/g, '_'); // Unescape markdown underscores
           const value = match[2].trim();
           
           // Don't override existing environment variables

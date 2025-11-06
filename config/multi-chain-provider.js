@@ -283,16 +283,31 @@ class MultiChainProvider {
 
   /**
    * Private: Select best endpoint from available options
+   * Priority can be configured via RPC_PROVIDER_PRIORITY env variable
+   * Default: "infura,alchemy,quicknode,https,wss"
    */
   _selectBestEndpoint(endpoints) {
-    // Priority order: Infura HTTPS > Alchemy HTTPS > QuickNode HTTPS > Any HTTPS > WSS
-    const priorities = [
-      /mainnet\.https\.infura$/i,
-      /mainnet\.https\.alchemy$/i,
-      /mainnet\.https\.quicknode$/i,
-      /https/i,
-      /wss/i
-    ];
+    // Get provider priority from environment or use default
+    const priorityConfig = process.env.RPC_PROVIDER_PRIORITY || 'infura,alchemy,quicknode,https,wss';
+    const priorityList = priorityConfig.split(',').map(p => p.trim().toLowerCase());
+    
+    // Build priority regex patterns based on configuration
+    const priorities = priorityList.map(provider => {
+      switch(provider) {
+        case 'infura':
+          return /mainnet\.https\.infura$/i;
+        case 'alchemy':
+          return /mainnet\.https\.alchemy$/i;
+        case 'quicknode':
+          return /mainnet\.https\.quicknode$/i;
+        case 'https':
+          return /https/i;
+        case 'wss':
+          return /wss/i;
+        default:
+          return new RegExp(provider, 'i'); // Custom pattern
+      }
+    });
 
     for (const priority of priorities) {
       for (const [key, url] of Object.entries(endpoints)) {
