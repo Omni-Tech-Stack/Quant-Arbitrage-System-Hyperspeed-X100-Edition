@@ -44,6 +44,409 @@ logging.basicConfig(
 )
 logger = logging.getLogger('90DaySimulation')
 
+class FlashLoanRiskManager:
+    """
+    Production-Grade Flash Loan Risk Management System
+    
+    Implements dynamic risk configuration, adaptive slippage calculation,
+    and comprehensive risk metrics for flash loan arbitrage operations.
+    
+    Key Features:
+    - Size-based loan categorization with adaptive parameters
+    - Advanced slippage impact modeling
+    - Multi-dimensional risk scoring
+    - Failure probability estimation
+    - Position size optimization
+    """
+    
+    # Flash loan size categories (USD)
+    LOAN_SIZE_CATEGORIES = {
+        'small': {'min': 0, 'max': 50000},
+        'medium': {'min': 50000, 'max': 200000},
+        'large': {'min': 200000, 'max': float('inf')}
+    }
+    
+    # Dynamic risk parameters per category
+    RISK_CONFIGS = {
+        'small': {
+            'base_slippage_tolerance': 0.008,      # 0.8%
+            'max_pool_utilization': 0.25,          # 25% of pool
+            'min_profit_threshold': 10,            # $10 minimum
+            'gas_multiplier': 1.0,
+            'risk_score_threshold': 0.7,           # Lower risk tolerance
+            'max_price_impact': 0.015              # 1.5%
+        },
+        'medium': {
+            'base_slippage_tolerance': 0.012,      # 1.2%
+            'max_pool_utilization': 0.15,          # 15% of pool
+            'min_profit_threshold': 50,            # $50 minimum
+            'gas_multiplier': 1.3,
+            'risk_score_threshold': 0.5,           # Medium risk tolerance
+            'max_price_impact': 0.025              # 2.5%
+        },
+        'large': {
+            'base_slippage_tolerance': 0.020,      # 2.0%
+            'max_pool_utilization': 0.10,          # 10% of pool
+            'min_profit_threshold': 200,           # $200 minimum
+            'gas_multiplier': 1.8,
+            'risk_score_threshold': 0.3,           # Higher risk tolerance needed
+            'max_price_impact': 0.040              # 4.0%
+        }
+    }
+    
+    def __init__(self):
+        """Initialize the Flash Loan Risk Manager"""
+        self.historical_failures = []
+        self.risk_metrics_history = []
+        logger.info("FlashLoanRiskManager initialized with production-grade risk controls")
+    
+    def categorize_loan_size(self, loan_amount_usd: float) -> str:
+        """
+        Categorize flash loan size into small/medium/large
+        
+        Args:
+            loan_amount_usd: Loan amount in USD
+            
+        Returns:
+            Category string: 'small', 'medium', or 'large'
+        """
+        for category, bounds in self.LOAN_SIZE_CATEGORIES.items():
+            if bounds['min'] <= loan_amount_usd < bounds['max']:
+                return category
+        return 'large'  # Default to large for amounts over max
+    
+    def get_risk_config(self, loan_amount_usd: float) -> Dict[str, float]:
+        """
+        Get dynamic risk configuration based on loan size
+        
+        Args:
+            loan_amount_usd: Loan amount in USD
+            
+        Returns:
+            Dictionary of risk parameters
+        """
+        category = self.categorize_loan_size(loan_amount_usd)
+        return self.RISK_CONFIGS[category].copy()
+    
+    def calculate_adaptive_slippage(
+        self,
+        loan_amount_usd: float,
+        pool_liquidity_usd: float,
+        hops: int,
+        volatility_index: float = 1.0,
+        competition_level: float = 0.3
+    ) -> Dict[str, float]:
+        """
+        Calculate adaptive slippage tolerance with multi-factor analysis
+        
+        Considers:
+        - Pool liquidity depth
+        - Multi-hop route complexity
+        - Market volatility conditions
+        - MEV bot competition level
+        
+        Args:
+            loan_amount_usd: Flash loan size in USD
+            pool_liquidity_usd: Average pool liquidity across route
+            hops: Number of hops in route
+            volatility_index: Market volatility (0.5 = low, 1.0 = normal, 2.0 = high)
+            competition_level: MEV competition (0.0 to 1.0)
+            
+        Returns:
+            Dictionary with slippage metrics
+        """
+        config = self.get_risk_config(loan_amount_usd)
+        base_slippage = config['base_slippage_tolerance']
+        
+        # Factor 1: Pool depth impact
+        loan_to_liquidity_ratio = loan_amount_usd / pool_liquidity_usd if pool_liquidity_usd > 0 else 1.0
+        depth_multiplier = 1.0 + (loan_to_liquidity_ratio * 2.0)  # Linear increase
+        
+        # Factor 2: Route complexity (more hops = more slippage)
+        complexity_multiplier = 1.0 + ((hops - 2) * 0.25)  # +25% per extra hop
+        
+        # Factor 3: Volatility impact
+        volatility_multiplier = volatility_index
+        
+        # Factor 4: Competition impact (more competition = more slippage)
+        competition_multiplier = 1.0 + (competition_level * 0.5)  # Up to +50%
+        
+        # Combined adaptive slippage
+        adaptive_slippage = (
+            base_slippage * 
+            depth_multiplier * 
+            complexity_multiplier * 
+            volatility_multiplier * 
+            competition_multiplier
+        )
+        
+        return {
+            'base_slippage': base_slippage,
+            'adaptive_slippage': adaptive_slippage,
+            'depth_multiplier': depth_multiplier,
+            'complexity_multiplier': complexity_multiplier,
+            'volatility_multiplier': volatility_multiplier,
+            'competition_multiplier': competition_multiplier,
+            'loan_to_liquidity_ratio': loan_to_liquidity_ratio
+        }
+    
+    def validate_position_size(
+        self,
+        loan_amount_usd: float,
+        pool_liquidity_usd: float
+    ) -> Tuple[bool, str]:
+        """
+        Validate if position size is within acceptable limits
+        
+        Args:
+            loan_amount_usd: Flash loan size
+            pool_liquidity_usd: Pool liquidity
+            
+        Returns:
+            Tuple of (is_valid, reason)
+        """
+        config = self.get_risk_config(loan_amount_usd)
+        max_utilization = config['max_pool_utilization']
+        
+        if pool_liquidity_usd <= 0:
+            return False, "Invalid pool liquidity"
+        
+        utilization = loan_amount_usd / pool_liquidity_usd
+        
+        if utilization > max_utilization:
+            return False, f"Position size {utilization*100:.1f}% exceeds max {max_utilization*100:.1f}%"
+        
+        return True, "Position size acceptable"
+    
+    def calculate_risk_adjusted_threshold(
+        self,
+        loan_amount_usd: float,
+        expected_slippage: float,
+        gas_cost_usd: float
+    ) -> float:
+        """
+        Calculate risk-adjusted minimum profit threshold
+        
+        Args:
+            loan_amount_usd: Flash loan size
+            expected_slippage: Expected slippage percentage
+            gas_cost_usd: Estimated gas cost
+            
+        Returns:
+            Risk-adjusted profit threshold in USD
+        """
+        config = self.get_risk_config(loan_amount_usd)
+        base_threshold = config['min_profit_threshold']
+        
+        # Add buffer for slippage risk
+        slippage_buffer = loan_amount_usd * expected_slippage * 1.5  # 1.5x safety margin
+        
+        # Add buffer for gas cost volatility (gas can spike)
+        gas_buffer = gas_cost_usd * 0.5  # 50% gas volatility buffer
+        
+        # Total risk-adjusted threshold
+        adjusted_threshold = base_threshold + slippage_buffer + gas_buffer
+        
+        return adjusted_threshold
+    
+    def calculate_flash_loan_risk_score(
+        self,
+        loan_amount_usd: float,
+        pool_liquidity_usd: float,
+        expected_slippage: float,
+        actual_price_impact: float,
+        hops: int,
+        has_mev: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Calculate comprehensive flash loan risk score
+        
+        Risk score ranges from 0 (highest risk) to 1 (lowest risk)
+        
+        Args:
+            loan_amount_usd: Flash loan size
+            pool_liquidity_usd: Pool liquidity
+            expected_slippage: Expected slippage
+            actual_price_impact: Actual price impact from AMM calculations
+            hops: Number of hops
+            has_mev: Whether route includes MEV opportunities
+            
+        Returns:
+            Dictionary with risk metrics
+        """
+        config = self.get_risk_config(loan_amount_usd)
+        
+        # Component 1: Loan-to-liquidity ratio (lower is better)
+        ltl_ratio = loan_amount_usd / pool_liquidity_usd if pool_liquidity_usd > 0 else 1.0
+        ltl_score = max(0, 1 - (ltl_ratio / config['max_pool_utilization']))
+        
+        # Component 2: Slippage risk (lower is better)
+        max_acceptable_slippage = config['base_slippage_tolerance'] * 2.0
+        slippage_score = max(0, 1 - (expected_slippage / max_acceptable_slippage))
+        
+        # Component 3: Price impact risk
+        price_impact_score = max(0, 1 - (actual_price_impact / config['max_price_impact']))
+        
+        # Component 4: Route complexity risk (fewer hops is better)
+        complexity_score = max(0, 1 - ((hops - 2) * 0.2))  # Penalty for each hop beyond 2
+        
+        # Component 5: MEV bonus (MEV opportunities reduce risk through higher profit potential)
+        mev_score = 1.2 if has_mev else 1.0
+        
+        # Weighted composite risk score
+        weights = {
+            'ltl': 0.30,
+            'slippage': 0.25,
+            'price_impact': 0.25,
+            'complexity': 0.15,
+            'mev': 0.05
+        }
+        
+        composite_score = (
+            ltl_score * weights['ltl'] +
+            slippage_score * weights['slippage'] +
+            price_impact_score * weights['price_impact'] +
+            complexity_score * weights['complexity']
+        ) * mev_score
+        
+        # Liquidation risk estimation (simplified model)
+        liquidation_risk = self._estimate_liquidation_risk(
+            loan_amount_usd, expected_slippage, actual_price_impact
+        )
+        
+        return {
+            'composite_risk_score': min(1.0, composite_score),  # Capped at 1.0
+            'ltl_ratio': ltl_ratio,
+            'ltl_score': ltl_score,
+            'slippage_score': slippage_score,
+            'price_impact_score': price_impact_score,
+            'complexity_score': complexity_score,
+            'liquidation_risk': liquidation_risk,
+            'risk_threshold': config['risk_score_threshold'],
+            'passes_risk_check': composite_score >= config['risk_score_threshold']
+        }
+    
+    def _estimate_liquidation_risk(
+        self,
+        loan_amount_usd: float,
+        expected_slippage: float,
+        price_impact: float
+    ) -> float:
+        """
+        Estimate liquidation risk probability
+        
+        Returns value between 0 (no risk) and 1 (certain liquidation)
+        """
+        # Simplified liquidation risk model
+        # Risk increases with slippage and price impact
+        slippage_risk = min(expected_slippage * 10, 0.5)  # Max 50% from slippage
+        impact_risk = min(price_impact * 8, 0.3)  # Max 30% from price impact
+        
+        # Larger loans have higher liquidation risk
+        size_risk = min(loan_amount_usd / 1000000, 0.2)  # Max 20% from size
+        
+        total_risk = slippage_risk + impact_risk + size_risk
+        return min(total_risk, 1.0)
+    
+    def estimate_failure_probability(
+        self,
+        risk_score: float,
+        market_phase: str,
+        competition_level: float
+    ) -> Dict[str, float]:
+        """
+        Estimate probability of flash loan failure
+        
+        Args:
+            risk_score: Composite risk score (0-1)
+            market_phase: Current market phase (bull/bear/sideways)
+            competition_level: MEV bot competition (0-1)
+            
+        Returns:
+            Dictionary with failure probability metrics
+        """
+        # Base failure rate from risk score
+        base_failure_prob = 1 - risk_score
+        
+        # Market phase adjustment
+        market_multipliers = {
+            'bull': 0.8,      # Lower failure in bull markets
+            'bear': 1.4,      # Higher failure in bear markets
+            'sideways': 1.0   # Neutral
+        }
+        market_multiplier = market_multipliers.get(market_phase, 1.0)
+        
+        # Competition adjustment (more competition = higher failure)
+        competition_multiplier = 1.0 + (competition_level * 0.5)
+        
+        # Historical failure rate (if available)
+        historical_failure_rate = self._get_historical_failure_rate()
+        
+        # Weighted probability
+        estimated_probability = (
+            base_failure_prob * 0.5 * market_multiplier * competition_multiplier +
+            historical_failure_rate * 0.5
+        )
+        
+        return {
+            'failure_probability': min(estimated_probability, 1.0),
+            'base_failure_prob': base_failure_prob,
+            'market_multiplier': market_multiplier,
+            'competition_multiplier': competition_multiplier,
+            'historical_failure_rate': historical_failure_rate,
+            'success_probability': 1 - min(estimated_probability, 1.0)
+        }
+    
+    def _get_historical_failure_rate(self) -> float:
+        """Get historical failure rate from tracked metrics"""
+        if not self.historical_failures:
+            return 0.4  # Default baseline failure rate (60% success)
+        
+        recent_window = self.historical_failures[-100:]  # Last 100 attempts
+        if not recent_window:
+            return 0.4
+            
+        failure_count = sum(1 for f in recent_window if f)
+        return failure_count / len(recent_window)
+    
+    def record_result(self, success: bool, risk_metrics: Dict[str, Any]):
+        """
+        Record flash loan attempt result for future predictions
+        
+        Args:
+            success: Whether the flash loan succeeded
+            risk_metrics: Risk metrics from the attempt
+        """
+        self.historical_failures.append(not success)
+        self.risk_metrics_history.append({
+            'success': success,
+            'metrics': risk_metrics,
+            'timestamp': datetime.now()
+        })
+        
+        # Keep only last 1000 records to prevent memory bloat
+        if len(self.historical_failures) > 1000:
+            self.historical_failures = self.historical_failures[-1000:]
+        if len(self.risk_metrics_history) > 1000:
+            self.risk_metrics_history = self.risk_metrics_history[-1000:]
+    
+    def get_gas_cost_multiplier(self, loan_amount_usd: float) -> float:
+        """
+        Get gas cost multiplier based on loan size
+        
+        Larger loans need more sophisticated execution strategies
+        and thus incur higher gas costs.
+        
+        Args:
+            loan_amount_usd: Flash loan size
+            
+        Returns:
+            Gas cost multiplier
+        """
+        config = self.get_risk_config(loan_amount_usd)
+        return config['gas_multiplier']
+
+
 class AMMCalculator:
     """
     Automated Market Maker (AMM) Calculator using Constant Product Formula
@@ -164,6 +567,9 @@ class Simulation90Day:
     # AMM Calculator instance
     amm = AMMCalculator()
     
+    # Flash Loan Risk Manager instance
+    risk_manager = FlashLoanRiskManager()
+    
     def __init__(self, initial_capital: float = 100000.0, output_dir: str = "results"):
         self.initial_capital = initial_capital
         self.output_dir = output_dir
@@ -186,9 +592,13 @@ class Simulation90Day:
         
         # Market conditions
         self.market_phase = 'bull'  # bull, bear, sideways
+        self.volatility_index = 1.0  # Normal volatility
         
         # Competition tracking
         self.bot_competition_level = 0.3  # 30% competition initially
+        
+        # Flash loan risk tracking
+        self.flash_loan_metrics = []
         
         # Create output directory
         os.makedirs(self.output_dir, exist_ok=True)
@@ -231,15 +641,25 @@ class Simulation90Day:
         self.print_summary()
 
     def update_market_conditions(self, day: int):
-        """Update market phase and competition level"""
+        """Update market phase, volatility, and competition level"""
         phases = ['bull', 'bear', 'sideways']
         old_phase = self.market_phase
         self.market_phase = random.choice(phases)
+        
+        # Update volatility index based on market phase
+        volatility_ranges = {
+            'bull': (0.8, 1.2),
+            'bear': (1.2, 2.0),
+            'sideways': (0.6, 1.0)
+        }
+        vol_range = volatility_ranges[self.market_phase]
+        self.volatility_index = random.uniform(*vol_range)
         
         # Increase competition over time
         self.bot_competition_level = min(0.3 + (day / 90) * 0.4, 0.7)
         
         logger.info(f"  📊 Market Phase: {old_phase} → {self.market_phase}")
+        logger.info(f"  📈 Volatility Index: {self.volatility_index:.2f}")
         logger.info(f"  🤖 Bot Competition: {self.bot_competition_level*100:.1f}%")
 
     async def simulate_day(self, date: datetime, day_number: int) -> Dict[str, Any]:
@@ -339,20 +759,28 @@ class Simulation90Day:
         # Generate route path
         route_path = self.generate_route_path(hops, is_crosschain)
         
-        # Initial input amount
+        # Initial input amount (flash loan size)
         input_amount = random.uniform(50000, 200000)  # Input in USD
         current_amount = input_amount
+        
+        # Categorize flash loan and get risk config
+        loan_category = self.risk_manager.categorize_loan_size(input_amount)
+        risk_config = self.risk_manager.get_risk_config(input_amount)
         
         # Simulate each hop using AMM calculations
         total_fees = 0
         total_price_impact = 0
         hop_details = []
+        total_pool_liquidity = 0
         
         for hop in range(hops):
             # Simulate liquidity pool reserves (realistic ranges based on pool size)
             pool_size_multiplier = random.uniform(0.5, 3.0)  # Pool liquidity variation
             reserve_x = random.uniform(500000, 5000000) * pool_size_multiplier
             reserve_y = random.uniform(500000, 5000000) * pool_size_multiplier
+            
+            pool_liquidity = reserve_x + reserve_y
+            total_pool_liquidity += pool_liquidity
             
             # Trading fee (0.3% for most DEXs, 0.05% for some stable pairs)
             is_stable_pair = random.random() < 0.3
@@ -377,10 +805,27 @@ class Simulation90Day:
                 'output': output,
                 'fee': hop_fee,
                 'price_impact': price_impact,
-                'pool_liquidity': reserve_x + reserve_y
+                'pool_liquidity': pool_liquidity
             })
             
             current_amount = output
+        
+        # Average pool liquidity across route
+        avg_pool_liquidity = total_pool_liquidity / hops if hops > 0 else 0
+        
+        # Calculate adaptive slippage using risk manager
+        slippage_analysis = self.risk_manager.calculate_adaptive_slippage(
+            loan_amount_usd=input_amount,
+            pool_liquidity_usd=avg_pool_liquidity,
+            hops=hops,
+            volatility_index=self.volatility_index,
+            competition_level=self.bot_competition_level
+        )
+        
+        # Validate position size
+        position_valid, position_reason = self.risk_manager.validate_position_size(
+            input_amount, avg_pool_liquidity
+        )
         
         # Final output amount
         output_amount = current_amount
@@ -407,10 +852,16 @@ class Simulation90Day:
         # Calculate gross profit (output - input)
         gross_profit = output_amount - input_amount
         
-        # Gas costs
+        # Gas costs with flash loan risk multiplier
         primary_chain = route_path['chains'][0]
         base_gas = self.CHAIN_GAS_COSTS[primary_chain]
+        
+        # Get gas multiplier from risk manager based on loan size
+        flash_loan_gas_multiplier = self.risk_manager.get_gas_cost_multiplier(input_amount)
+        
         gas_multiplier = 1.0 + (hops - 2) * 0.3  # More hops = more gas
+        gas_multiplier *= flash_loan_gas_multiplier  # Flash loan size penalty
+        
         if is_crosschain:
             gas_multiplier *= 2.0  # Crosschain costs more
         if has_mev:
@@ -418,21 +869,46 @@ class Simulation90Day:
         gas_price_variation = random.uniform(0.8, 1.4)
         gas_cost = base_gas * gas_multiplier * gas_price_variation
         
-        # Additional slippage modeling (beyond AMM price impact)
-        liquidity_score = random.uniform(0.7, 1.0)
-        additional_slippage = SLIPPAGE_TOLERANCE * (1.5 - liquidity_score)  # Lower liquidity = more slippage
-        slippage_cost = gross_profit * additional_slippage
+        # Enhanced slippage modeling using adaptive calculation
+        adaptive_slippage = slippage_analysis['adaptive_slippage']
+        slippage_cost = gross_profit * adaptive_slippage
+        
+        # Calculate flash loan risk score
+        avg_price_impact_pct = (total_price_impact / hops) / 100 if hops > 0 else 0
+        risk_score_data = self.risk_manager.calculate_flash_loan_risk_score(
+            loan_amount_usd=input_amount,
+            pool_liquidity_usd=avg_pool_liquidity,
+            expected_slippage=adaptive_slippage,
+            actual_price_impact=avg_price_impact_pct,
+            hops=hops,
+            has_mev=has_mev
+        )
+        
+        # Calculate risk-adjusted profit threshold
+        risk_adjusted_threshold = self.risk_manager.calculate_risk_adjusted_threshold(
+            loan_amount_usd=input_amount,
+            expected_slippage=adaptive_slippage,
+            gas_cost_usd=gas_cost
+        )
         
         # Calculate net profit using profit formula: π = (output - input) - fees - gas
         net_profit = self.amm.calculate_profit(output_amount, input_amount, total_fees + slippage_cost, gas_cost)
+        
+        # Estimate failure probability
+        failure_prob_data = self.risk_manager.estimate_failure_probability(
+            risk_score=risk_score_data['composite_risk_score'],
+            market_phase=self.market_phase,
+            competition_level=self.bot_competition_level
+        )
         
         # Success determination is now handled by the gateway, but we can estimate it
         # for routes that don't even make it to the gateway.
         success = False
         simulation_passed = False
+        risk_check_passed = risk_score_data['passes_risk_check'] and position_valid
 
-        # Only profitable routes are considered for bundle submission
-        if net_profit > MIN_PROFIT_USD:
+        # Only profitable routes that pass risk checks are considered for bundle submission
+        if net_profit > risk_adjusted_threshold and risk_check_passed:
             # Phase 1: Simulate bundle with eth_callBundle for revert protection
             bundle_for_sim = [{'tx': '0x...', 'profit_eth': net_profit / 2000}] # Simplified bundle
             sim_result = gateway.simulate_eth_call_bundle(bundle_for_sim)
@@ -448,24 +924,31 @@ class Simulation90Day:
                 gateway.add_to_tx_release_tank(bundle_for_sim, target_block)
                 
                 # Phase 3: Simulate the MEV-Boost auction at the target block
-                # This is where the bundle's success is ultimately decided
+                # Apply failure probability to auction success
                 auction_results = gateway.simulate_blx_submit_bundle(target_block)
                 
-                # Check if our bundle won
-                if any(res['success'] for res in auction_results):
-                    logger.debug(f"  ✅ Route {route_num}: eth_callBundle✓ → MEV-Boost Auction WON")
+                # Check if our bundle won (adjusted by failure probability)
+                won_auction = any(res['success'] for res in auction_results)
+                # Apply stochastic failure based on estimated probability
+                actual_success = won_auction and (random.random() > failure_prob_data['failure_probability'])
+                
+                if actual_success:
+                    logger.debug(f"  ✅ Route {route_num}: Risk✓ eth_callBundle✓ → MEV-Boost Auction WON")
                     success = True
                 else:
-                    logger.debug(f"  ❌ Route {route_num}: eth_callBundle✓ → MEV-Boost Auction LOST")
+                    logger.debug(f"  ❌ Route {route_num}: Risk✓ eth_callBundle✓ → MEV-Boost Auction LOST")
                     success = False
         else:
-            logger.debug(f"  📉 Route {route_num} below min profit threshold. Skipping bundle submission.")
+            if net_profit <= risk_adjusted_threshold:
+                logger.debug(f"  📉 Route {route_num} below risk-adjusted threshold ${risk_adjusted_threshold:.2f}. Skipping.")
+            elif not risk_check_passed:
+                logger.debug(f"  ⚠️ Route {route_num} FAILED risk check. Reason: {position_reason if not position_valid else 'Low risk score'}")
             success = False
 
         
-        # If failed, attempt retry logic (simulate 1 retry)
+        # If failed, attempt retry logic (simulate 1 retry) - only for routes that passed initial risk check
         retry_attempted = False
-        if not success and net_profit > MIN_PROFIT_USD:
+        if not success and net_profit > risk_adjusted_threshold and risk_check_passed:
             retry_attempted = True
             # Retry has a lower chance of success
             retry_sim_result = gateway.simulate_eth_call_bundle(bundle_for_sim)
@@ -473,13 +956,36 @@ class Simulation90Day:
                 target_block += 1 # Retry in next block
                 gateway.add_to_tx_release_tank(bundle_for_sim, target_block)
                 retry_auction_results = gateway.simulate_blx_submit_bundle(target_block)
-                if any(res['success'] for res in retry_auction_results):
+                won_retry = any(res['success'] for res in retry_auction_results)
+                # Apply higher failure probability for retries
+                retry_success = won_retry and (random.random() > failure_prob_data['failure_probability'] * 1.3)
+                if retry_success:
                     success = True
+        
+        # Record result in risk manager for future predictions
+        self.risk_manager.record_result(success, risk_score_data)
         
         # Execution time
         exec_time_ms = random.uniform(800, 2500) * (1 + 0.2 * (hops - 2))
         
         roi_percent = (net_profit / input_amount * 100) if success else 0
+        
+        # Compile comprehensive flash loan metrics
+        flash_loan_metrics = {
+            'loan_category': loan_category,
+            'loan_to_liquidity_ratio': slippage_analysis['loan_to_liquidity_ratio'],
+            'adaptive_slippage': adaptive_slippage,
+            'base_slippage': slippage_analysis['base_slippage'],
+            'risk_adjusted_threshold': risk_adjusted_threshold,
+            'composite_risk_score': risk_score_data['composite_risk_score'],
+            'liquidation_risk': risk_score_data['liquidation_risk'],
+            'failure_probability': failure_prob_data['failure_probability'],
+            'success_probability': failure_prob_data['success_probability'],
+            'position_valid': position_valid,
+            'position_reason': position_reason,
+            'risk_check_passed': risk_check_passed,
+            'flash_loan_gas_multiplier': flash_loan_gas_multiplier
+        }
         
         return {
             'day': day,
@@ -505,9 +1011,11 @@ class Simulation90Day:
             'no_revert_protection': True,  # All routes use simulation-first strategy
             'retry_attempted': retry_attempted,
             'execution_time_ms': exec_time_ms,
-            'liquidity_score': liquidity_score,
+            'liquidity_score': avg_pool_liquidity / (avg_pool_liquidity + input_amount),  # Normalized liquidity
             'competition_level': self.bot_competition_level,
-            'amm_formula_used': 'constant_product'
+            'amm_formula_used': 'constant_product',
+            'volatility_index': self.volatility_index,
+            **flash_loan_metrics  # Add all flash loan risk metrics
         }
 
     def generate_route_path(self, hops: int, is_crosschain: bool) -> Dict[str, List[str]]:
@@ -646,6 +1154,16 @@ class Simulation90Day:
         total_frontrun = sum(1 for r in successful_routes if r['mev_type'] == 'frontrun')
         total_backrun = sum(1 for r in successful_routes if r['mev_type'] == 'backrun')
         
+        # Flash loan risk statistics
+        small_loans = sum(1 for r in successful_routes if r.get('loan_category') == 'small')
+        medium_loans = sum(1 for r in successful_routes if r.get('loan_category') == 'medium')
+        large_loans = sum(1 for r in successful_routes if r.get('loan_category') == 'large')
+        
+        avg_risk_score = np.mean([r.get('composite_risk_score', 0) for r in successful_routes]) if successful_routes else 0
+        avg_liquidation_risk = np.mean([r.get('liquidation_risk', 0) for r in successful_routes]) if successful_routes else 0
+        avg_failure_prob = np.mean([r.get('failure_probability', 0) for r in successful_routes]) if successful_routes else 0
+        avg_ltl_ratio = np.mean([r.get('loan_to_liquidity_ratio', 0) for r in successful_routes]) if successful_routes else 0
+        
         avg_profit = np.mean([r['net_profit'] for r in successful_routes]) if successful_routes else 0
         best_route = max(successful_routes, key=lambda x: x['net_profit']) if successful_routes else None
         avg_exec_time = np.mean([r['execution_time_ms'] for r in successful_routes]) if successful_routes else 0
@@ -685,6 +1203,17 @@ MEV Sandwich:        {total_frontrun + total_backrun:,} ({(total_frontrun + tota
   - Frontrun:        {total_frontrun:,}
   - Backrun:         {total_backrun:,}
 
+FLASH LOAN RISK ANALYSIS
+{'-'*80}
+Small Loans (<$50k):       {small_loans:,} ({small_loans/self.cumulative_routes*100 if self.cumulative_routes else 0:.1f}%)
+Medium Loans ($50k-$200k): {medium_loans:,} ({medium_loans/self.cumulative_routes*100 if self.cumulative_routes else 0:.1f}%)
+Large Loans (>$200k):      {large_loans:,} ({large_loans/self.cumulative_routes*100 if self.cumulative_routes else 0:.1f}%)
+
+Avg Risk Score:            {avg_risk_score:.3f} (1.0 = lowest risk)
+Avg Liquidation Risk:      {avg_liquidation_risk*100:.2f}%
+Avg Failure Probability:   {avg_failure_prob*100:.2f}%
+Avg Loan-to-Liquidity:     {avg_ltl_ratio:.3f}
+
 PERFORMANCE METRICS
 {'-'*80}
 Best Day Profit:         ${max([d['net_profit'] for d in self.daily_metrics]):.2f}
@@ -714,6 +1243,13 @@ DAILY BREAKDOWN (First 10 Days)
         top_routes = sorted(successful_routes, key=lambda x: x['net_profit'], reverse=True)[:10]
         for i, route in enumerate(top_routes, 1):
             report += f"{i:2d}. {route['route_path']:30s} | ${route['net_profit']:>8,.2f} | {route['hops']}-hop | {route['chains']}\n"
+        
+        report += f"\nTOP 10 HIGHEST RISK ROUTES (Successfully Executed)\n{'-'*80}\n"
+        high_risk_routes = sorted(successful_routes, key=lambda x: x.get('liquidation_risk', 0), reverse=True)[:10]
+        for i, route in enumerate(high_risk_routes, 1):
+            liq_risk = route.get('liquidation_risk', 0)
+            risk_score = route.get('composite_risk_score', 0)
+            report += f"{i:2d}. {route['route_path']:30s} | Liq Risk: {liq_risk*100:5.2f}% | Score: {risk_score:.3f} | ${route['net_profit']:>8,.2f}\n"
         
         report += f"\n{'='*80}\nEND OF REPORT\n{'='*80}\n"
         
