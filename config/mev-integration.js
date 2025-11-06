@@ -4,7 +4,6 @@
  */
 
 const axios = require('axios');
-const { ethers } = require('ethers');
 const { envConfig } = require('./env-config');
 
 class MEVIntegration {
@@ -409,7 +408,7 @@ class MEVIntegration {
     }
 
     // Default: use first available relay
-    for (const [relayName, relay] of this.relays) {
+    for (const relay of this.relays.values()) {
       if (relay.sendTransaction) {
         return relay.sendTransaction(signedTransaction, options);
       }

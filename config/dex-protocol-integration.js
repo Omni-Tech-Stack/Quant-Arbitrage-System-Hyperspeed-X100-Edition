@@ -3,7 +3,6 @@
  * Implements connections to all DEX protocols defined in .env
  */
 
-const { ethers } = require('ethers');
 const { envConfig } = require('./env-config');
 const { multiChainProvider } = require('./multi-chain-provider');
 
@@ -313,7 +312,7 @@ class DEXProtocolIntegration {
     console.log('Configured Protocols:');
     console.log('─'.repeat(60));
     
-    for (const [key, protocol] of this.protocols) {
+    for (const protocol of this.protocols.values()) {
       const flashloan = protocol.flashloanEnabled ? ' (Flashloan ✓)' : '';
       console.log(`  ✓ ${protocol.name.padEnd(20)} ${protocol.type}${flashloan}`);
     }

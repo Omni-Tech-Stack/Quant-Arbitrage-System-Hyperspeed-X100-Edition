@@ -4,7 +4,6 @@
  * Tests all newly created modules and their integration with .env variables
  */
 
-const path = require('path');
 const { envConfig } = require('./config/env-config');
 const { multiChainProvider } = require('./config/multi-chain-provider');
 const { dexProtocolIntegration } = require('./config/dex-protocol-integration');

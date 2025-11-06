@@ -160,7 +160,7 @@ class NotificationIntegration {
         payload.avatar_url = avatarUrl;
       }
 
-      const response = await axios.post(channel.webhookUrl, payload);
+      await axios.post(channel.webhookUrl, payload);
 
       return {
         success: true,
@@ -383,7 +383,7 @@ This is a test message from the Quant Arbitrage System.
       console.log('Configured Channels:');
       console.log('─'.repeat(60));
       
-      for (const [key, channel] of this.channels) {
+      for (const channel of this.channels.values()) {
         console.log(`  ✓ ${channel.name.padEnd(20)} ${channel.type}`);
       }
     } else {
