@@ -2,13 +2,29 @@
 
 ---
 
-## 📊 NEW: Complete ASL Diagram Available!
+## 📊 NEW: Complete System Diagrams Available!
 
-**Want to understand how every file works together?** Check out our new comprehensive [ASL (Architecture System Layout) Diagram](ASL_DIAGRAM.md)!
+### 💫 Data Lifecycle Diagram - NEW!
+
+**Want to understand how data flows from intake to profit?** Check out our new [Data Lifecycle Diagram](DATA_LIFECYCLE_DIAGRAM.md)!
+
+This diagram shows:
+- ✅ **Complete data journey** - From blockchain intake to flashloan repayment + profit
+- ✅ **5 detailed phases** - Data intake, detection, decision, execution, settlement
+- ✅ **All transformations** - See exact data structures at each stage
+- ✅ **Profit breakdown** - Complete financial flow with numbers
+- ✅ **ML integration** - How AI scoring improves selection
+- ✅ **Smart contract execution** - Atomic flashloan arbitrage flow
+
+**[💫 View the Data Lifecycle Diagram →](DATA_LIFECYCLE_DIAGRAM.md)**
+
+### 🏗️ ASL Architecture Diagram
+
+**Want to understand how every file works together?** Check out our comprehensive [ASL (Architecture System Layout) Diagram](ASL_DIAGRAM.md)!
 
 This diagram provides:
 - ✅ **Complete file mapping** - Every single file's role in operations
-- ✅ **End-to-end flow visualization** - See how data flows through the system
+- ✅ **End-to-end flow visualization** - See how components interact
 - ✅ **Phase-by-phase breakdown** - 12 operational phases explained
 - ✅ **Dependency graphs** - Understand file relationships
 - ✅ **Quick file finder** - Locate any file instantly
@@ -763,6 +779,7 @@ jobs:
 ### Core Documentation
 - **[README.md](README.md)** - This file - System overview and features
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - 🏗️ System architecture and design
+- **[DATA_LIFECYCLE_DIAGRAM.md](DATA_LIFECYCLE_DIAGRAM.md)** - 💫 **NEW! Data Lifecycle** - Complete data flow from intake to profit
 - **[ASL_DIAGRAM.md](ASL_DIAGRAM.md)** - 📊 **Complete ASL Diagram** - Every file's role in end-to-end operations
 - **[TESTING.md](TESTING.md)** - Testing guide and test suites
 - **[SECURITY.md](SECURITY.md)** - Security best practices and guidelines
