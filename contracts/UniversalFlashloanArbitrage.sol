@@ -59,7 +59,7 @@ interface IDYDXSoloMargin {
         uint8 actionType;
         uint256 accountId;
         uint256 amount;
-        address primaryMarketId;
+        uint256 primaryMarketId;
         uint256 secondaryMarketId;
         address otherAddress;
         uint256 otherAccountId;
@@ -522,7 +522,7 @@ contract UniversalFlashloanArbitrage is ReentrancyGuard, Ownable {
                 params.tokens[i + 1],
                 currentAmount,
                 params.routers[i],
-                i < params.swapData.length ? params.swapData[i] : ""
+                i < params.swapData.length ? params.swapData[i] : bytes("")
             );
         }
         
@@ -601,7 +601,7 @@ contract UniversalFlashloanArbitrage is ReentrancyGuard, Ownable {
                     params.tokens[i + 1],
                     currentAmount,
                     params.routers[i],
-                    i < params.swapData.length ? params.swapData[i] : ""
+                    i < params.swapData.length ? params.swapData[i] : bytes("")
                 );
             }
         }

@@ -241,7 +241,8 @@ contract CrossChainMessenger {
         address destContract = chainContracts[arb.destChain];
         require(destContract != address(0), "No contract on dest chain");
         
-        (success, bytes memory result) = destContract.call(arb.executionData);
+        bytes memory result;
+        (success, result) = destContract.call(arb.executionData);
         
         if (success && result.length >= 32) {
             profit = abi.decode(result, (uint256));
@@ -279,8 +280,10 @@ contract ArbitrageCallEncoder {
         bytes32 requestId
     ) external pure returns (bytes memory) {
         
-        // Create ArbitrageParams struct encoding
-        bytes memory paramsData = abi.encode(
+        // Encode the complete function call directly
+        return abi.encodeWithSignature(
+            "executeArbitrage(string,uint8,address[],uint256[],address[],bytes[],uint256,uint256,bytes32)",
+            provider,
             executionType,
             tokens,
             amounts,
@@ -289,13 +292,6 @@ contract ArbitrageCallEncoder {
             minProfit,
             maxGasPrice,
             requestId
-        );
-        
-        // Encode the complete function call
-        return abi.encodeWithSignature(
-            "executeArbitrage(string,(uint8,address[],uint256[],address[],bytes[],uint256,uint256,bytes32))",
-            provider,
-            abi.decode(paramsData, (uint8, address[], uint256[], address[], bytes[], uint256, uint256, bytes32))
         );
     }
     
