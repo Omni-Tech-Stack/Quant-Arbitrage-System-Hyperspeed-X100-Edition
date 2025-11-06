@@ -408,7 +408,7 @@ class FlashLoanRiskManager:
         if not self.historical_failures:
             return 0.4  # Default baseline failure rate (60% success)
         
-        recent_window = self.historical_failures[-self.HISTORICAL_WINDOW_SIZE:]  # Last N attempts
+        recent_window = self.historical_failures[-self.HISTORICAL_WINDOW_SIZE:]  # Last HISTORICAL_WINDOW_SIZE (100) attempts
         if not recent_window:
             return 0.4
             
