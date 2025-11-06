@@ -1,0 +1,211 @@
+{
+  "simulation_id": "sim_1762430670",
+  "timestamp": "2025-11-06T12:04:30.941682",
+  "total_execution_time_ms": 12913.986682891846,
+  "boot_results": {
+    "start_time": "2025-11-06T12:04:18.027934",
+    "components": {
+      "pool_fetcher": {
+        "status": "success",
+        "pools_found": 3413,
+        "chains_active": [
+          "polygon",
+          "ethereum",
+          "arbitrum"
+        ],
+        "execution_time_ms": 7417.027950286865
+      },
+      "tvl_analytics": {
+        "status": "success",
+        "total_tvl_analyzed": 2450000000,
+        "pools_analyzed": 3413,
+        "execution_time_ms": 1507.303237915039
+      },
+      "ml_engine": {
+        "status": "success",
+        "models_loaded": [
+          "XGBoost_Primary",
+          "ONNX_Optimized",
+          "Feature_Scaler"
+        ],
+        "feature_dimensions": 10,
+        "execution_time_ms": 1002.0871162414551
+      },
+      "contract_validation": {
+        "status": "success",
+        "contracts_validated": [
+          "UniversalFlashloanArbitrage",
+          "FlashloanFactory",
+          "PayloadEncoder"
+        ],
+        "networks_checked": [
+          "polygon",
+          "ethereum",
+          "arbitrum"
+        ],
+        "execution_time_ms": 1302.1306991577148
+      }
+    },
+    "performance": {},
+    "total_boot_time_ms": 11229.049444198608
+  },
+  "detection_results": {
+    "opportunities_found": 3,
+    "best_profit": 17.17,
+    "detection_time_ms": 601.557731628418,
+    "opportunities": [
+      {
+        "id": "arb_opp_1",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 45.67,
+        "gas_cost": 28.5,
+        "net_profit": 17.17,
+        "confidence": 0.87,
+        "hops": 3,
+        "liquidity_score": 0.92
+      },
+      {
+        "id": "arb_opp_2",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 33.370000000000005,
+        "gas_cost": 31.7,
+        "net_profit": 12.070000000000002,
+        "confidence": 0.72,
+        "hops": 3,
+        "liquidity_score": 0.8200000000000001
+      },
+      {
+        "id": "arb_opp_3",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 21.07,
+        "gas_cost": 34.9,
+        "net_profit": 6.970000000000002,
+        "confidence": 0.5700000000000001,
+        "hops": 3,
+        "liquidity_score": 0.72
+      }
+    ]
+  },
+  "scoring_results": {
+    "scoring_time_ms": 50.22692680358887,
+    "best_opportunity": {
+      "id": "arb_opp_1",
+      "tokens": [
+        "USDC",
+        "WETH",
+        "USDC"
+      ],
+      "dexs": [
+        "Uniswap_V3",
+        "SushiSwap"
+      ],
+      "estimated_profit": 45.67,
+      "gas_cost": 28.5,
+      "net_profit": 17.17,
+      "confidence": 0.87,
+      "hops": 3,
+      "liquidity_score": 0.92,
+      "ml_score": 0.6703600000000001,
+      "primary_score": 0.636842,
+      "onnx_score": 0.7038780000000001
+    },
+    "all_scored": [
+      {
+        "id": "arb_opp_1",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 45.67,
+        "gas_cost": 28.5,
+        "net_profit": 17.17,
+        "confidence": 0.87,
+        "hops": 3,
+        "liquidity_score": 0.92,
+        "ml_score": 0.6703600000000001,
+        "primary_score": 0.636842,
+        "onnx_score": 0.7038780000000001
+      },
+      {
+        "id": "arb_opp_2",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 33.370000000000005,
+        "gas_cost": 31.7,
+        "net_profit": 12.070000000000002,
+        "confidence": 0.72,
+        "hops": 3,
+        "liquidity_score": 0.8200000000000001,
+        "ml_score": 0.55556,
+        "primary_score": 0.527782,
+        "onnx_score": 0.5833380000000001
+      },
+      {
+        "id": "arb_opp_3",
+        "tokens": [
+          "USDC",
+          "WETH",
+          "USDC"
+        ],
+        "dexs": [
+          "Uniswap_V3",
+          "SushiSwap"
+        ],
+        "estimated_profit": 21.07,
+        "gas_cost": 34.9,
+        "net_profit": 6.970000000000002,
+        "confidence": 0.5700000000000001,
+        "hops": 3,
+        "liquidity_score": 0.72,
+        "ml_score": 0.37976000000000004,
+        "primary_score": 0.36077200000000004,
+        "onnx_score": 0.39874800000000005
+      }
+    ]
+  },
+  "execution_results": {
+    "tx_hash": "0xdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abc",
+    "actual_profit": 16.4832,
+    "estimated_profit": 17.17,
+    "execution_time_ms": 1032.5183868408203,
+    "gas_used": 184461,
+    "success": true
+  },
+  "success": true
+}
