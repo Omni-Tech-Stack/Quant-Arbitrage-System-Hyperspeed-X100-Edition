@@ -23,15 +23,19 @@
     "test:python": "./test_all_python_modules.sh",
     "test:js": "./test_all_js_modules.sh",
     "test:comprehensive": "npm run test:js && npm run test:python && npm run verify:backend",
+    "test:ml": "python test_ml_integration.py",
     "pool:fetch": "node dex_pool_fetcher.js",
     "pool:sdk": "node sdk_pool_loader.js",
     "orchestrator:test": "python main_quant_hybrid_orchestrator.py --test",
+    "orchestrator:simulation": "python main_quant_hybrid_orchestrator.py --mode SIMULATION",
+    "orchestrator:live": "python main_quant_hybrid_orchestrator.py --mode LIVE",
+    "ml:train": "python train_dual_ai_models.py --samples 1000 --validate",
     "tvl:fetch": "python orchestrator_tvl_hyperspeed.py --once --chains ethereum polygon bsc",
     "health": "if command -v jq >/dev/null 2>&1; then curl -s http://localhost:3001/api/health | jq; else echo 'jq not found. Please install jq for pretty-printed output.'; curl -s http://localhost:3001/api/health; fi",
     "deploy": "./deploy.sh",
     "logs": "tail -f logs/*.log",
     "logs:backend": "cd backend && npm run logs || tail -f logs/system.log",
-    "help": "echo '\n📚 Available Commands:\n  npm run setup          - One-click installation\n  npm run verify:system  - Verify system health\n  npm run verify         - Verify all modules\n  npm run test:all       - Run all tests\n  npm run deploy         - Deploy with Docker\n  npm run pool:fetch     - Fetch pool data\n  npm run health         - Check API health\n  npm run help           - Show this help\n\nFor more info, see INSTALL.md and README.md\n'"
+    "help": "echo '\n📚 Available Commands:\n  npm run setup                - One-click installation\n  npm run verify:system        - Verify system health\n  npm run test:ml              - Test ML integration\n  npm run ml:train             - Train ML models\n  npm run orchestrator:simulation - Run in SIMULATION mode\n  npm run orchestrator:live    - Run in LIVE mode (⚠️ real money!)\n  npm run orchestrator:test    - Test mode\n  npm run deploy               - Deploy with Docker\n  npm run help                 - Show this help\n\nFor more info, see ML_EXECUTION_MODES_README.md\n'"
   },
   "keywords": [
     "arbitrage",
