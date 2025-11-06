@@ -912,6 +912,7 @@ class Simulation90Day:
         success = False
         simulation_passed = False
         risk_check_passed = risk_score_data['passes_risk_check'] and position_valid
+        target_block = day * 7200  # Define target block upfront for potential retry
 
         # Only profitable routes that pass risk checks are considered for bundle submission
         if net_profit > risk_adjusted_threshold and risk_check_passed:
@@ -926,7 +927,6 @@ class Simulation90Day:
                 success = False
             else:
                 # Phase 2: Add to private mempool (TX_RELEASE_TANK) for later submission
-                target_block = day * 7200 # Simplified target block
                 gateway.add_to_tx_release_tank(bundle_for_sim, target_block)
                 
                 # Phase 3: Simulate the MEV-Boost auction at the target block
@@ -954,14 +954,15 @@ class Simulation90Day:
         
         # If failed, attempt retry logic (simulate 1 retry) - only for routes that passed initial risk check
         retry_attempted = False
-        if not success and net_profit > risk_adjusted_threshold and risk_check_passed:
+        if not success and net_profit > risk_adjusted_threshold and risk_check_passed and simulation_passed:
             retry_attempted = True
             # Retry has a lower chance of success
+            bundle_for_sim = [{'tx': '0x...', 'profit_eth': net_profit / 2000}]  # Recreate bundle for retry
             retry_sim_result = gateway.simulate_eth_call_bundle(bundle_for_sim)
             if retry_sim_result["success"]:
-                target_block += 1 # Retry in next block
-                gateway.add_to_tx_release_tank(bundle_for_sim, target_block)
-                retry_auction_results = gateway.simulate_blx_submit_bundle(target_block)
+                target_block_retry = target_block + 1  # Retry in next block
+                gateway.add_to_tx_release_tank(bundle_for_sim, target_block_retry)
+                retry_auction_results = gateway.simulate_blx_submit_bundle(target_block_retry)
                 won_retry = any(res['success'] for res in retry_auction_results)
                 # Apply higher failure probability for retries
                 retry_success = won_retry and (random.random() > failure_prob_data['failure_probability'] * 1.3)
