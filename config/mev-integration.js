@@ -463,7 +463,7 @@ class MEVIntegration {
     console.log('Configured Relays:');
     console.log('─'.repeat(60));
     
-    for (const [key, relay] of this.relays) {
+    for (const relay of this.relays.values()) {
       console.log(`  ✓ ${relay.name.padEnd(20)} ${relay.type}`);
       console.log(`    Features: ${relay.features.join(', ')}`);
     }
