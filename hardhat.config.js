@@ -70,14 +70,7 @@ module.exports = {
     polygonFork: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
-      forking: {
-        url: process.env.POLYGON_RPC || "https://polygon-rpc.com",
-        blockNumber: process.env.FORK_BLOCK_NUMBER ? parseInt(process.env.FORK_BLOCK_NUMBER) : undefined,
-      },
-      accounts: {
-        count: 20,
-        accountsBalance: "100000000000000000000000", // 100,000 ETH per account
-      }
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
     arbitrum: {
       url: process.env.ARBITRUM_RPC || "https://arb1.arbitrum.io/rpc",
