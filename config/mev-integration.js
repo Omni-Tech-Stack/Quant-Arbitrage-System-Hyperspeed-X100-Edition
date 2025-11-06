@@ -319,7 +319,13 @@ class MEVIntegration {
     const relay = this.relays.get('PRIVATE_MEMPOOLS');
     const results = [];
     
-    // Configurable timeout (default 5 seconds)
+    /**
+     * PRIVATE_MEMPOOL_TIMEOUT environment variable
+     * Timeout in milliseconds for sending transactions to private mempools.
+     * Set this in your environment (e.g., in .env) to override the default.
+     * Default: 5000 (5 seconds)
+     * Example: PRIVATE_MEMPOOL_TIMEOUT=7000
+     */
     const timeout = parseInt(process.env.PRIVATE_MEMPOOL_TIMEOUT || '5000');
 
     for (const url of relay.urls) {
