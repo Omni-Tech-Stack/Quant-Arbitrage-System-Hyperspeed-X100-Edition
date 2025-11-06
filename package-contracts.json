@@ -1,0 +1,78 @@
+{
+  "name": "universal-flashloan-arbitrage",
+  "version": "1.0.0",
+  "description": "Universal multi-provider flashloan arbitrage system with cross-chain support",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "deploy:local": "hardhat run scripts/deploy-flashloan-system.js --network localhost",
+    "deploy:goerli": "hardhat run scripts/deploy-flashloan-system.js --network goerli",
+    "deploy:sepolia": "hardhat run scripts/deploy-flashloan-system.js --network sepolia",
+    "deploy:mumbai": "hardhat run scripts/deploy-flashloan-system.js --network mumbai",
+    "deploy:ethereum": "hardhat run scripts/deploy-flashloan-system.js --network ethereum",
+    "deploy:polygon": "hardhat run scripts/deploy-flashloan-system.js --network polygon",
+    "deploy:arbitrum": "hardhat run scripts/deploy-flashloan-system.js --network arbitrum",
+    "deploy:optimism": "hardhat run scripts/deploy-flashloan-system.js --network optimism",
+    "deploy:bsc": "hardhat run scripts/deploy-flashloan-system.js --network bsc",
+    "deploy:avalanche": "hardhat run scripts/deploy-flashloan-system.js --network avalanche",
+    "verify:ethereum": "hardhat verify --network ethereum",
+    "verify:polygon": "hardhat verify --network polygon",
+    "verify:arbitrum": "hardhat verify --network arbitrum",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "size": "hardhat size-contracts",
+    "flatten": "hardhat flatten",
+    "deploy-all": "npm run deploy:ethereum && npm run deploy:polygon && npm run deploy:arbitrum && npm run deploy:bsc",
+    "test-integration": "hardhat test test/integration/*.test.js",
+    "test-unit": "hardhat test test/unit/*.test.js"
+  },
+  "keywords": [
+    "flashloan",
+    "arbitrage",
+    "defi",
+    "aave",
+    "balancer",
+    "curve",
+    "uniswap",
+    "cross-chain",
+    "mev",
+    "solidity"
+  ],
+  "author": "Quant Arbitrage System Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@openzeppelin/contracts": "^4.9.3",
+    "@typechain/ethers-v5": "^10.2.1",
+    "@typechain/hardhat": "^6.1.6",
+    "chai": "^4.3.7",
+    "dotenv": "^16.3.1",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.1",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.4",
+    "typechain": "^8.3.1"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "axios": "^1.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/universal-flashloan-arbitrage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/universal-flashloan-arbitrage/issues"
+  },
+  "homepage": "https://github.com/your-org/universal-flashloan-arbitrage#readme"
+}

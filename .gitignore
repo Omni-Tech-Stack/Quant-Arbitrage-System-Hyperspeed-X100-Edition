@@ -2,6 +2,12 @@
 node_modules/
 package-lock.json
 
+# Hardhat
+cache/
+artifacts/
+typechain/
+typechain-types/
+
 # Test results (keep template/example, exclude generated)
 backend/test-results/*.json
 backend/test-results/*.md
