@@ -288,15 +288,25 @@ class ExecutionModeManager:
             return ManualExecutionDecision.TIMEOUT
     
     def _input_thread(self):
-        """Thread to handle user input"""
+        """
+        Thread to handle user input
+        
+        NOTE: Current implementation uses timeout-based auto-execution.
+        For full interactive input, integrate with:
+        - pynput library for keyboard events
+        - curses for terminal input
+        - or a web-based UI for remote control
+        
+        This ensures the system can run in non-interactive environments
+        (e.g., Docker containers, background processes) while still
+        supporting the 5-second window concept for future UI integration.
+        """
         try:
-            # Non-blocking input simulation
-            # In production, this would use proper terminal input handling
-            print("  Waiting for input (M/S)...", end='', flush=True)
-            
-            # Simulate checking for input
-            # In a real implementation, you'd use select() or similar
-            # For now, we'll auto-timeout for testing
+            # Auto-timeout for non-interactive environments
+            # In production with UI, this would be replaced with:
+            # - WebSocket messages from dashboard
+            # - Keyboard input detection
+            # - Remote API calls
             time.sleep(self.manual_window_duration)
             
         except Exception as e:

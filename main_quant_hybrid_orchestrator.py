@@ -185,11 +185,27 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
                 break
             continue
         
-        # Determine if this is a hot route
+        # Determine if this is a hot route (use config thresholds)
+        try:
+            from config.config import (
+                HOT_ROUTE_ML_SCORE_THRESHOLD,
+                HOT_ROUTE_PROFIT_THRESHOLD,
+                HOT_ROUTE_CONFIDENCE_THRESHOLD
+            )
+        except ImportError:
+            # Fallback to defaults if config not available
+            HOT_ROUTE_ML_SCORE_THRESHOLD = 0.8
+            HOT_ROUTE_PROFIT_THRESHOLD = 50.0
+            HOT_ROUTE_CONFIDENCE_THRESHOLD = 0.85
+        
         ml_score = best_opp.get('ml_score', 0)
         profit = best_opp.get('estimated_profit', 0)
         confidence = best_opp.get('confidence', 0)
-        is_hot_route = ml_score > 0.8 or profit > 50 or confidence > 0.85
+        is_hot_route = (
+            ml_score > HOT_ROUTE_ML_SCORE_THRESHOLD or
+            profit > HOT_ROUTE_PROFIT_THRESHOLD or
+            confidence > HOT_ROUTE_CONFIDENCE_THRESHOLD
+        )
         
         print(f"\n[Hybrid] Iteration {iteration}: Opportunity found!")
         print(f"  Estimated Profit: ${profit:.2f}")

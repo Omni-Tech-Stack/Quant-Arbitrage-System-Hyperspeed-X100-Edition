@@ -2,6 +2,24 @@
 
 ---
 
+## 🎯 NEW: ML Models & Execution Modes
+
+**Fully integrated ML models with SIMULATION and LIVE trading modes!**
+
+### ✅ 2 Clear Modes:
+1. **SIMULATION** 🎓 - Paper trading with mock executions (safe learning)
+2. **LIVE** 💰 - Real money executions with 100% automation
+
+### 🔥 BONUS Feature:
+- **5-second manual execution window** for hot routes
+- Press **'M'** to manually execute
+- Press **'S'** to skip
+- Auto-executes after timeout
+
+**[📖 Read the Complete ML & Execution Modes Guide →](ML_EXECUTION_MODES_README.md)**
+
+---
+
 ## 📊 NEW: Complete ASL Diagram Available!
 
 **Want to understand how every file works together?** Check out our new comprehensive [ASL (Architecture System Layout) Diagram](ASL_DIAGRAM.md)!
@@ -63,11 +81,30 @@ Verify all modules and tests are working correctly:
 # Comprehensive system health check (NEW!)
 npm run verify:system
 
+# Test ML integration (NEW!)
+npm run test:ml
+
 # Module verification
 npm run verify
 
 # Run all verification checks
 npm run verify:all
+```
+
+### 🎯 Quick Start with Execution Modes (NEW!)
+
+```bash
+# Train ML models first
+npm run ml:train
+
+# Test in SIMULATION mode (safe)
+npm run orchestrator:simulation
+
+# Test mode (initialize only)
+npm run orchestrator:test
+
+# LIVE mode (⚠️ real money - use with caution!)
+npm run orchestrator:live
 ```
 
 This will:

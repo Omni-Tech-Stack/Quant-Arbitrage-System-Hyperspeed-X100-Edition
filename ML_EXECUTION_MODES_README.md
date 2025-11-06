@@ -98,8 +98,13 @@ When a hot route is detected in LIVE mode:
 1. System pauses execution
 2. Displays opportunity details
 3. Waits 5 seconds for manual decision
-4. User can press 'M' to execute or 'S' to skip
-5. Auto-executes after timeout
+4. **Currently auto-executes after timeout** (interactive input in future UI)
+5. Manual 'M'/'S' input will be available via:
+   - Web dashboard (recommended)
+   - API endpoints
+   - Future terminal integration
+
+> **Note**: The current CLI implementation auto-executes after the 5-second window. For full interactive control, integrate with the web dashboard or use the API endpoints. This design ensures the system works in non-interactive environments (Docker, background processes) while maintaining the framework for future UI integration.
 
 ## 📊 Statistics & Monitoring
 

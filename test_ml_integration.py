@@ -59,13 +59,14 @@ def create_test_opportunities():
 def mock_execute(opportunity):
     """Mock execution function"""
     import random
+    import time
     success = random.random() < 0.9
     
     if success:
         actual_profit = opportunity['estimated_profit'] * random.uniform(0.9, 1.05)
         return {
             'success': True,
-            'tx_hash': f"0xTEST{int(os.times().elapsed * 1000000)}",
+            'tx_hash': f"0xTEST{int(time.time() * 1000000)}",
             'actual_profit': actual_profit
         }
     else:
