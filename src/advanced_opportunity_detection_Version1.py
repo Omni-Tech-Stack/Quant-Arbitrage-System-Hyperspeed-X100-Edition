@@ -58,72 +58,47 @@ class OpportunityDetector:
     def _evaluate_path(self, path: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Evaluate a path and calculate estimated profit
-        Uses realistic arbitrage calculation based on pool prices
+        Uses realistic arbitrage calculation based on pool price differentials
         """
         if not path or len(path) < 2:
             return None
         
         # Start with realistic trade amount in USD
         initial_amount_usd = 10000  # $10,000 starting amount
-        current_amount_usd = initial_amount_usd
         
-        # Track the actual token flow through the path
-        # For arbitrage, we start and end with the same token
-        # The profit comes from price differences between DEXes
-        
-        # Calculate the cumulative price impact
-        # For a simple 2-hop arbitrage: Buy on DEX A, sell on DEX B
-        # Profit = (price_b / price_a) - 1 - fees
-        
-        for i, pool in enumerate(path):
-            fee = pool.get('fee', 0.003)
-            reserve0 = float(pool.get('reserve0', 1))
-            reserve1 = float(pool.get('reserve1', 1))
-            
-            # Calculate the effective price in this pool
-            # Price = reserve1 / reserve0 (how much token1 per token0)
-            if reserve0 > 0:
-                pool_price = reserve1 / reserve0
-            else:
-                return None
-            
-            # For arbitrage cycles, we alternate between buying and selling
-            # On even hops, we multiply by price; on odd hops, we divide
-            # This simulates: Token A -> Token B -> Token A
-            if i % 2 == 0:
-                # Buying: convert current amount using pool price
-                current_amount_usd = current_amount_usd * pool_price / pool_price  # Normalized
-                # Apply price differential from reserves (already baked in)
-                # Just apply fee
-                current_amount_usd *= (1 - fee)
-            else:
-                # Selling back: we should gain from the price difference
-                # The price difference is already in the reserves
-                # Apply fee
-                current_amount_usd *= (1 - fee)
-        
-        # Simplified: for 2-hop cycles across different DEXes
-        # Calculate profit based on price differential
+        # For 2-hop arbitrage cycles (buy on one DEX, sell on another)
+        # Calculate profit based on price differential between the two pools
         if len(path) == 2:
             pool1 = path[0]
             pool2 = path[1]
             
-            # Get prices from both pools
+            # Get prices from both pools (token1/token0 ratio)
             price1 = float(pool1.get('reserve1', 1)) / float(pool1.get('reserve0', 1))
             price2 = float(pool2.get('reserve1', 1)) / float(pool2.get('reserve0', 1))
             
             # Price difference as a percentage
             price_diff = abs(price1 - price2) / min(price1, price2)
             
-            # Profit = initial_amount * price_diff - fees
+            # Calculate profit: initial_amount * price_diff - fees
             total_fees = (pool1.get('fee', 0.003) + pool2.get('fee', 0.003))
             net_profit_ratio = price_diff - total_fees
             
-            if net_profit_ratio > 0:
-                gross_profit = initial_amount_usd * price_diff
-                fee_cost = initial_amount_usd * total_fees
-                current_amount_usd = initial_amount_usd + gross_profit - fee_cost
-            else:
+            if net_profit_ratio <= 0:
+                return None
+            
+            gross_profit = initial_amount_usd * price_diff
+            fee_cost = initial_amount_usd * total_fees
+            current_amount_usd = initial_amount_usd + gross_profit - fee_cost
+        else:
+            # For 3-hop paths, use a simplified calculation
+            # Apply fees at each hop
+            current_amount_usd = initial_amount_usd
+            for pool in path:
+                fee = pool.get('fee', 0.003)
+                current_amount_usd *= (1 - fee)
+            
+            # No profit for just fee loss
+            if current_amount_usd <= initial_amount_usd:
                 return None
         
         # Calculate gross profit

@@ -242,20 +242,21 @@ class DEXPoolFetcher {
 
   /**
    * Generate deterministic pool address based on tokens
+   * Uses a more robust hashing to avoid collisions
    */
   generatePoolAddress(chain, dex, token0, token1) {
-    // Create a deterministic address based on chain, dex, and tokens
-    const input = `${chain}-${dex}-${token0}-${token1}`;
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
+    const crypto = require('crypto');
     
-    // Convert hash to hex address
-    const hashHex = Math.abs(hash).toString(16).padStart(40, '0').slice(0, 40);
-    return `0x${hashHex}`;
+    // Create a deterministic address based on chain, dex, and tokens
+    // Sort tokens to ensure same pair always gets same address
+    const [sortedToken0, sortedToken1] = [token0, token1].sort();
+    const input = `${chain}-${dex}-${sortedToken0}-${sortedToken1}`;
+    
+    // Use crypto hash for better distribution
+    const hash = crypto.createHash('sha256').update(input).digest('hex');
+    
+    // Take first 40 characters for address
+    return `0x${hash.substring(0, 40)}`;
   }
 
   /**
