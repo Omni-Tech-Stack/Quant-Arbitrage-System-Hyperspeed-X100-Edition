@@ -214,6 +214,25 @@ install_python_dependencies() {
         print_step "Installing Python packages from requirements.txt..."
         pip3 install -r requirements.txt
         print_success "Python dependencies installed"
+        
+        # Verify critical ML dependencies for Dual AI system
+        print_step "Verifying ML dependencies for Dual AI system..."
+        python3 -c "import sklearn, xgboost, onnx, onnxruntime, skl2onnx" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            print_success "All ML dependencies verified (scikit-learn, xgboost, onnx, onnxruntime)"
+        else
+            print_warning "Some ML dependencies missing - installing explicitly..."
+            pip3 install scikit-learn xgboost onnx onnxruntime skl2onnx
+            
+            # Verify again
+            python3 -c "import sklearn, xgboost, onnx, onnxruntime, skl2onnx" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                print_success "ML dependencies installed successfully"
+            else
+                print_error "Failed to install ML dependencies. Dual AI features may not work."
+                print_info "Try manually: pip3 install scikit-learn xgboost onnx onnxruntime skl2onnx"
+            fi
+        fi
     else
         print_warning "No requirements.txt found, skipping Python dependency installation"
     fi
@@ -325,7 +344,20 @@ verify_installation() {
     if [ -f "models/arb_ml_latest.pkl" ] || [ -f "models/xgboost_primary.pkl" ]; then
         print_success "ML models are available"
     else
-        print_info "ML models not found - run 'python train_ml_model.py' to train models"
+        print_warning "ML models not found"
+        print_info "Training Dual AI models now (this may take a minute)..."
+        
+        # Train models automatically
+        if python3 -c "import sklearn, xgboost, onnx" 2>/dev/null; then
+            PYTHONPATH=. python3 train_dual_ai_models.py --model-dir ./models --data-source synthetic --samples 500 >/dev/null 2>&1
+            if [ $? -eq 0 ] && [ -f "models/xgboost_primary.pkl" ]; then
+                print_success "Dual AI models trained successfully"
+            else
+                print_warning "Auto-training failed - run 'PYTHONPATH=. python3 train_dual_ai_models.py' manually"
+            fi
+        else
+            print_warning "ML dependencies not available - install them first to train models"
+        fi
     fi
     
     echo ""

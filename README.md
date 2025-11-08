@@ -196,6 +196,11 @@ The **Quant Arbitrage System: Hyperspeed X100 Edition** is a fully modular, cros
 - **Why?** Superior accuracy AND speed - XGBoost provides complex pattern recognition while ONNX delivers ultra-low latency for high-frequency trading. Best of both worlds!
 - **Documentation**: See [models/DUAL_AI_README.md](./models/DUAL_AI_README.md)
 
+**Required ML Dependencies:**
+- `scikit-learn`, `xgboost`, `onnx`, `onnxruntime`, `skl2onnx`
+- Verify with: `python3 scripts/verify_dependencies.py`
+- Auto-installed by `./setup.sh`
+
 ### 1. Dynamic Cross-Chain Pool Discovery & Registry Management
 
 - **dex_pool_fetcher.js**: Aggregates liquidity pool data from 30+ DEXes (Uniswap, SushiSwap, Balancer, Curve, PancakeSwap, QuickSwap, Trader Joe, etc.) across all major EVM-compatible blockchains. Features auto-updates, error handling, and incremental sync.

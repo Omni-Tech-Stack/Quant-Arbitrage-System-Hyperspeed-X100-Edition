@@ -13,6 +13,7 @@
     "install:all": "npm install",
     "verify": "node verify-all-modules.js",
     "verify:system": "./verify-system.sh",
+    "verify:dependencies": "python3 scripts/verify_dependencies.py",
     "verify:backend": "cd backend && npm test",
     "verify:engine": "cd ultra-fast-arbitrage-engine && npm run build && npm test",
     "verify:all": "npm run verify:system && npm run verify",
@@ -35,7 +36,7 @@
     "deploy": "./deploy.sh",
     "logs": "tail -f logs/*.log",
     "logs:backend": "cd backend && npm run logs || tail -f logs/system.log",
-    "help": "echo '\n📚 Available Commands:\n  npm run setup                - One-click installation\n  npm run verify:system        - Verify system health\n  npm run test:ml              - Test ML integration\n  npm run ml:train             - Train ML models\n  npm run orchestrator:simulation - Run in SIMULATION mode\n  npm run orchestrator:live    - Run in LIVE mode (⚠️ real money!)\n  npm run orchestrator:test    - Test mode\n  npm run deploy               - Deploy with Docker\n  npm run help                 - Show this help\n\nFor more info, see ML_EXECUTION_MODES_README.md\n'"
+    "help": "echo '\n📚 Available Commands:\n  npm run setup                - One-click installation\n  npm run verify:system        - Verify system health\n  npm run verify:dependencies  - Check Python ML dependencies\n  npm run test:ml              - Test ML integration\n  npm run ml:train             - Train ML models\n  npm run orchestrator:simulation - Run in SIMULATION mode\n  npm run orchestrator:live    - Run in LIVE mode (⚠️ real money!)\n  npm run orchestrator:test    - Test mode\n  npm run deploy               - Deploy with Docker\n  npm run help                 - Show this help\n\nFor more info, see ML_EXECUTION_MODES_README.md\n'"
   },
   "keywords": [
     "arbitrage",

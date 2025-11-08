@@ -101,6 +101,31 @@ cd ..
 pip3 install -r requirements.txt
 ```
 
+**Important ML Dependencies for Dual AI System:**
+
+The system requires these ML packages for the Dual AI engine:
+- `scikit-learn` - Machine learning algorithms
+- `xgboost` - Gradient boosting framework
+- `onnx` - ONNX model format
+- `onnxruntime` - ONNX inference runtime
+- `skl2onnx` - Convert sklearn models to ONNX
+
+These are included in `requirements.txt`. If installation fails, install them explicitly:
+
+```bash
+pip3 install scikit-learn xgboost onnx onnxruntime skl2onnx
+```
+
+**Verify ML dependencies:**
+
+```bash
+python3 scripts/verify_dependencies.py
+```
+
+This will check all required and optional packages and report any missing dependencies.
+pip3 install -r requirements.txt
+```
+
 ### Step 3: Build Modules
 
 ```bash
