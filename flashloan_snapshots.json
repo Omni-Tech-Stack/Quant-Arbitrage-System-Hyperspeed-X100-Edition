@@ -6,13 +6,13 @@
         "token_symbol": "WMATIC",
         "tvl_usd": 1000000.0,
         "max_flashloan_usd": 150000.0,
-        "timestamp": 1762589316.879329,
-        "timestamp_human": "2025-11-08T08:08:36.879329",
-        "expires_at": "2025-11-08T12:08:36.879337"
+        "timestamp": 1762597686.3395028,
+        "timestamp_human": "2025-11-08T10:28:06.339503",
+        "expires_at": "2025-11-08T14:28:06.339511"
       }
     }
   },
   "vaults": {},
   "last_snapshot_time": {},
-  "updated_at": "2025-11-08T08:08:36.879351"
+  "updated_at": "2025-11-08T10:28:06.339526"
 }
