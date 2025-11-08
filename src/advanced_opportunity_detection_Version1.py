@@ -73,8 +73,17 @@ class OpportunityDetector:
             pool2 = path[1]
             
             # Get prices from both pools (token1/token0 ratio)
-            price1 = float(pool1.get('reserve1', 1)) / float(pool1.get('reserve0', 1))
-            price2 = float(pool2.get('reserve1', 1)) / float(pool2.get('reserve0', 1))
+            reserve0_1 = float(pool1.get('reserve0', 1))
+            reserve1_1 = float(pool1.get('reserve1', 1))
+            reserve0_2 = float(pool2.get('reserve0', 1))
+            reserve1_2 = float(pool2.get('reserve1', 1))
+
+            # Explicitly check for zero or negative reserves to avoid division by zero
+            if reserve0_1 <= 0 or reserve0_2 <= 0:
+                return None
+
+            price1 = reserve1_1 / reserve0_1
+            price2 = reserve1_2 / reserve0_2
             
             # Price difference as a percentage
             price_diff = abs(price1 - price2) / min(price1, price2)
