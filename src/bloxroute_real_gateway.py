@@ -3,12 +3,15 @@
 bloXroute Real Gateway - MEV Protection and Bundle Submission
 This module provides a realistic simulation of interacting with the bloXroute
 API for MEV protection, including bundle simulation and submission.
+
+NOW INCLUDES GAS ORACLE INTEGRATION for no-revert guarantees
 """
 
 import json
 import random
 import time
 import hashlib
+import os
 from datetime import datetime, timedelta
 
 # Assuming bloxroute_config is in the config directory, and src is in the project root
@@ -16,15 +19,24 @@ import sys
 sys.path.append('..')
 from config.bloxroute_config import BLOXROUTE_AUTH_HEADER, BLOXROUTE_RELAY_API_URL
 
+# Import gas oracle integration
+try:
+    from gas_oracle_integration import GasOracleIntegration
+    GAS_ORACLE_AVAILABLE = True
+except ImportError:
+    GAS_ORACLE_AVAILABLE = False
+    print("[BloXroute] Warning: Gas oracle integration not available")
+
 class BloxrouteRealGateway:
     """
     Simulates a real gateway for submitting bundles to bloXroute for MEV protection.
     - Simulates `eth_callBundle` for pre-flight checks (no-revert).
     - Simulates `blx_submit_bundle` for private transaction submission.
     - Simulates MEV-Boost auction dynamics.
+    - NOW INTEGRATES GAS ORACLE for real-time gas validation
     """
 
-    def __init__(self, use_gemini_2_5_pro=True):
+    def __init__(self, use_gemini_2_5_pro=True, enable_gas_oracle=True, chain_name='polygon'):
         if not BLOXROUTE_AUTH_HEADER:
             raise ValueError("bloXroute auth header is not set!")
         self.headers = {
@@ -34,7 +46,27 @@ class BloxrouteRealGateway:
         self.endpoint = BLOXROUTE_RELAY_API_URL
         self.tx_release_tank = {}  # Internal private mempool
         self.use_gemini_2_5_pro = use_gemini_2_5_pro
+        self.chain_name = chain_name
+        
+        # Initialize Gas Oracle if available
+        self.enable_gas_oracle = enable_gas_oracle and GAS_ORACLE_AVAILABLE
+        self.gas_oracle = None
+        
+        if self.enable_gas_oracle:
+            try:
+                self.gas_oracle = GasOracleIntegration(
+                    update_interval_seconds=int(os.getenv('GAS_ORACLE_UPDATE_INTERVAL', '12')),
+                    spike_threshold_percent=float(os.getenv('GAS_SPIKE_THRESHOLD_PCT', '150.0')),
+                    history_window_blocks=20
+                )
+                print(f"[Gateway] ✓ Gas Oracle Integration ENABLED for {chain_name}")
+            except Exception as e:
+                print(f"[Gateway] ✗ Gas Oracle initialization failed: {e}")
+                self.gas_oracle = None
+                self.enable_gas_oracle = False
+        
         print(f"BloxrouteRealGateway initialized. Gemini 2.5 Pro support: {'Enabled' if self.use_gemini_2_5_pro else 'Disabled'}")
+        print(f"Gas Oracle: {'ENABLED' if self.enable_gas_oracle else 'DISABLED'}")
 
     def _generate_rpc_request(self, method, params):
         return {
@@ -44,13 +76,61 @@ class BloxrouteRealGateway:
             "params": params
         }
 
-    def simulate_eth_call_bundle(self, bundle_transactions):
+    def simulate_eth_call_bundle(self, bundle_transactions, estimated_gas_units=None):
         """
         Simulates `eth_callBundle` to check for reverts before submission.
         This is the core of the "no-revert" logic.
+        NOW INCLUDES GAS ORACLE VALIDATION
         """
         print(f"  [Gateway] Simulating eth_callBundle for {len(bundle_transactions)} transactions...")
         
+        # STEP 1: Check gas prices using Gas Oracle (user's endpoints)
+        if self.enable_gas_oracle and self.gas_oracle:
+            try:
+                gas_oracle_data = self.gas_oracle.fetch_gas_price(self.chain_name)
+                current_gas_gwei = gas_oracle_data.get('gas_price_gwei', 0)
+                is_spike = gas_oracle_data.get('is_spike', False)
+                spike_multiplier = gas_oracle_data.get('spike_multiplier', 1.0)
+                
+                print(f"  [Gateway] Gas Oracle: {current_gas_gwei:.1f} gwei (source: {gas_oracle_data.get('source', 'unknown')})")
+                
+                if is_spike:
+                    print(f"  [Gateway] ⚠️  GAS SPIKE DETECTED: {spike_multiplier:.1f}x baseline")
+                
+                # Check if gas exceeds maximum
+                max_gas_price_gwei = float(os.getenv('MAX_GAS_PRICE_GWEI', 2100))
+                if current_gas_gwei > max_gas_price_gwei:
+                    print(f"  [Gateway] ❌ eth_callBundle REJECTED: Gas price {current_gas_gwei:.1f} gwei > {max_gas_price_gwei:.1f} gwei limit")
+                    return {
+                        "success": False,
+                        "error": f"Gas price too high: {current_gas_gwei:.1f} gwei exceeds {max_gas_price_gwei:.1f} gwei limit",
+                        "gas_oracle_data": gas_oracle_data
+                    }
+                
+                # Validate gas budget if estimated_gas_units provided
+                if estimated_gas_units:
+                    gas_validation = self.gas_oracle.validate_gas_for_transaction(
+                        estimated_gas_units=estimated_gas_units,
+                        max_gas_price_gwei=max_gas_price_gwei,
+                        chain_name=self.chain_name,
+                        safety_multiplier=1.5
+                    )
+                    
+                    if not gas_validation['approved']:
+                        print(f"  [Gateway] ❌ eth_callBundle REJECTED: {gas_validation['reason']}")
+                        return {
+                            "success": False,
+                            "error": gas_validation['reason'],
+                            "gas_validation": gas_validation
+                        }
+                    
+                    print(f"  [Gateway] ✓ Gas validation passed (estimated cost: ${gas_validation.get('estimated_cost_usd', 0):.2f})")
+                
+            except Exception as e:
+                print(f"  [Gateway] Warning: Gas oracle check failed: {e}")
+                # Continue with simulation even if gas oracle fails
+        
+        # STEP 2: Simulate the transaction execution
         # In a real scenario, this would be a network request.
         # Here, we simulate the outcome.
         
