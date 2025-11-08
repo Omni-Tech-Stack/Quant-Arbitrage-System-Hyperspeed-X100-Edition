@@ -118,14 +118,40 @@ class OpportunityDetector:
             fee_cost = initial_amount_usd * total_fees
             current_amount_usd = initial_amount_usd + gross_profit - fee_cost
         else:
-            # For 3-hop paths, use a simplified calculation
-            # Apply fees at each hop
-            current_amount_usd = initial_amount_usd
+            # For 3-hop paths, simulate swaps through each pool using price and fee
+            current_amount = initial_amount_usd
+            # Determine the starting token
+            # Assume the path is a cycle: token_in -> ... -> token_in
+            token_in = path[0].get('token0Symbol', None)
+            if not token_in:
+                return None
+            current_token = token_in
             for pool in path:
+                # Determine swap direction
+                token0 = pool.get('token0Symbol')
+                token1 = pool.get('token1Symbol')
+                reserve0 = float(pool.get('reserve0', 1))
+                reserve1 = float(pool.get('reserve1', 1))
                 fee = pool.get('fee', 0.003)
-                current_amount_usd *= (1 - fee)
-            
-            # No profit for just fee loss
+                # Decide direction: if current_token == token0, swap token0 -> token1
+                if current_token == token0:
+                    # Swap token0 for token1
+                    price = reserve1 / reserve0 if reserve0 > 0 else 0
+                    current_amount = current_amount * price * (1 - fee)
+                    current_token = token1
+                elif current_token == token1:
+                    # Swap token1 for token0
+                    price = reserve0 / reserve1 if reserve1 > 0 else 0
+                    current_amount = current_amount * price * (1 - fee)
+                    current_token = token0
+                else:
+                    # Token not found in pool, invalid path
+                    return None
+            # At the end, check if we returned to the original token
+            if current_token != token_in:
+                return None
+            current_amount_usd = current_amount
+            # No profit if only fee loss or no gain
             if current_amount_usd <= initial_amount_usd:
                 return None
         
