@@ -57,8 +57,27 @@ class OpportunityDetector:
     
     def _evaluate_path(self, path: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Evaluate a path and calculate estimated profit
-        Uses realistic arbitrage calculation based on pool price differentials
+        Evaluate a path and calculate estimated profit.
+
+        Uses realistic arbitrage calculation based on pool price differentials.
+
+        Returns:
+            dict: An opportunity dictionary with the following fields:
+                path (list): The arbitrage path (list of pool dicts).
+                hops (int): Number of hops in the path.
+                initial_amount (float): Starting amount in USD.
+                final_amount (float): Final amount after executing the path.
+                gross_profit (float): Gross profit before gas and slippage.
+                estimated_gas (float): Estimated gas cost for the path.
+                gas_cost (float): Gas cost (same as estimated_gas).
+                slippage (float): Estimated total slippage for the path.
+                net_profit (float): Net profit after gas and slippage.
+                estimated_profit (float): Estimated profit (same as net_profit).
+                confidence (float): Confidence score (0.5-0.95) based on liquidity and path length.
+                ml_score (float): Machine learning score (0.0-1.0) for opportunity quality.
+                timestamp (None): Placeholder for timestamp.
+                chain (str): Blockchain network for the opportunity (e.g., 'ethereum', 'polygon').
+                tokens (list): List of token symbols involved in the path.
         """
         if not path or len(path) < 2:
             return None
