@@ -193,8 +193,8 @@ class OpportunityDetector:
         
         for pool in path:
             # Estimate slippage based on liquidity and trade size
-            liquidity_str = pool.get('liquidity', '1000000')
-            liquidity = float(liquidity_str) if liquidity_str else 1000000
+            liquidity_val = pool.get('liquidity', 1000000)
+            liquidity = float(liquidity_val)
             impact = (amount / liquidity) * 100  # Percentage impact
             total_slippage += min(impact, 5.0)  # Cap at 5% per hop
         
