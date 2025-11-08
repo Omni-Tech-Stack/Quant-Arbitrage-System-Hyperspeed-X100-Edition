@@ -174,8 +174,12 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
         
         # Score opportunities with ML
         best_opp = None
-        if ml_engine:
+        if ml_engine and hasattr(ml_engine, 'score_opportunities'):
             best_opp = ml_engine.score_opportunities(opportunities)
+        
+        # If ML didn't return a result or no ML engine, use highest profit
+        if not best_opp and opportunities:
+            best_opp = max(opportunities, key=lambda x: x.get('estimated_profit', 0))
         
         if not best_opp:
             print(f"[Hybrid] Iteration {iteration}: No optimal arb. Waiting...")
