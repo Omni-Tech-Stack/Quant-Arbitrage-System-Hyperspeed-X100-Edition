@@ -389,6 +389,22 @@ class QuadTurboRSEngine:
                 sim_result = self._simulate_trade(packet.opportunity)
                 packet.shadow_result = sim_result
                 
+                # Log execution with FULL ROUTE DETAILS
+                if self.verbose and sim_result['success']:
+                    profit = sim_result.get('actual_profit', 0)
+                    opp = packet.opportunity
+                    opp_id = packet.opportunity_id[-8:]
+                    dex_a = opp.get('dex_a', 'DEX_A')
+                    dex_b = opp.get('dex_b', 'DEX_B')
+                    token_in = opp.get('token_in', 'TOKEN_IN')[:10]
+                    token_out = opp.get('token_out', 'TOKEN_OUT')[:10]
+                    amount_in = opp.get('amount_in', 0)
+                    
+                    print(f"[Lane 2] ✓ EXECUTED: {opp_id}")
+                    print(f"         Route: {dex_a.upper()} → {dex_b.upper()}")
+                    print(f"         Swap: {token_in}... → {token_out}...")
+                    print(f"         Amount: {amount_in:.4f} | Profit: ${profit:.2f}")
+                
                 # Update stats
                 with self.stats_lock:
                     self.stats[Lane.SHADOW_SIM]['processed'] += 1

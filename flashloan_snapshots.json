@@ -1,0 +1,18 @@
+{
+  "pools": {
+    "polygon-quickswap-WMATIC-WETH": {
+      "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270": {
+        "token_address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+        "token_symbol": "WMATIC",
+        "tvl_usd": 1000000.0,
+        "max_flashloan_usd": 150000.0,
+        "timestamp": 1762597686.3395028,
+        "timestamp_human": "2025-11-08T10:28:06.339503",
+        "expires_at": "2025-11-08T14:28:06.339511"
+      }
+    }
+  },
+  "vaults": {},
+  "last_snapshot_time": {},
+  "updated_at": "2025-11-08T10:28:06.339526"
+}

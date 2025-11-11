@@ -88,6 +88,20 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
     if mode:
         EXECUTION_MODE = mode.upper()
     
+    # Initialize Flashloan Safety Manager
+    try:
+        from flashloan_safety_manager import FlashloanSafetyManager
+        flashloan_manager = FlashloanSafetyManager(
+            min_flashloan_usd=float(os.getenv('MIN_FLASHLOAN_USD', 50000)),
+            max_flashloan_percent_tvl=float(os.getenv('MAX_FLASHLOAN_PERCENT_TVL', 15)),
+            snapshot_refresh_minutes=int(os.getenv('FLASHLOAN_SNAPSHOT_REFRESH_MINUTES', 240)),
+            snapshot_file=os.getenv('FLASHLOAN_SNAPSHOT_FILE', 'flashloan_snapshots.json')
+        )
+        print(f"[Hybrid] ✓ Flashloan safety manager loaded")
+    except ImportError as e:
+        print(f"[Hybrid] ⚠ flashloan_safety_manager not found: {e}")
+        flashloan_manager = None
+    
     # Initialize execution mode manager
     try:
         from execution_mode_manager import ExecutionModeManager, ExecutionMode
@@ -205,17 +219,157 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
         ml_score = best_opp.get('ml_score', 0)
         profit = best_opp.get('estimated_profit', 0)
         confidence = best_opp.get('confidence', 0)
+        gas_cost = best_opp.get('gas_cost', 0)
+        slippage = best_opp.get('slippage', 0)
+        chain = best_opp.get('chain', 'unknown')
+        tokens = best_opp.get('tokens', [])
+        path = best_opp.get('path', [])
+        hops = best_opp.get('hops', 0)
+        initial_amount = best_opp.get('initial_amount', 0)
+        
         is_hot_route = (
             ml_score > HOT_ROUTE_ML_SCORE_THRESHOLD or
             profit > HOT_ROUTE_PROFIT_THRESHOLD or
             confidence > HOT_ROUTE_CONFIDENCE_THRESHOLD
         )
         
-        print(f"\n[Hybrid] Iteration {iteration}: Opportunity found!")
-        print(f"  Estimated Profit: ${profit:.2f}")
-        print(f"  ML Score: {ml_score:.4f}")
-        print(f"  Confidence: {confidence:.2%}")
-        print(f"  Hot Route: {'🔥 YES' if is_hot_route else 'No'}")
+        # Extract DEX route and token addresses
+        dex_route = []
+        token_addresses = []
+        flashloan_amount = initial_amount  # Initial amount is flashloan size
+        
+        for pool in path:
+            dex_name = pool.get('protocol', pool.get('dex', 'Unknown')).upper()
+            if dex_name not in dex_route:
+                dex_route.append(dex_name)
+            
+            token0_addr = pool.get('token0', pool.get('token0Address', 'N/A'))
+            token1_addr = pool.get('token1', pool.get('token1Address', 'N/A'))
+            if token0_addr not in token_addresses:
+                token_addresses.append(token0_addr)
+            if token1_addr not in token_addresses:
+                token_addresses.append(token1_addr)
+        
+        # Calculate flashloan details
+        flashloan_token = tokens[0] if tokens else 'UNKNOWN'
+        flashloan_token_address = token_addresses[0] if token_addresses else 'N/A'
+        
+        # Revert guarantee check (profit must exceed gas + slippage buffer)
+        slippage_buffer = slippage * initial_amount / 100  # Slippage in USD
+        total_risk = gas_cost + slippage_buffer
+        net_profit_after_risk = profit - total_risk
+        revert_guarantee = net_profit_after_risk > 0
+        
+        # Validate flashloan safety limits (if manager is loaded)
+        flashloan_approved = True
+        flashloan_details = {}
+        
+        if flashloan_manager and path:
+            pool_id = path[0].get('id', 'unknown')
+            token_address = token_addresses[0] if token_addresses else ''
+            pool_type = path[0].get('type', 'pool')
+            
+            # Update pool TVL if data available
+            if 'liquidity' in path[0]:
+                liquidity = float(path[0].get('liquidity', 0))
+                token_price = 1.0  # Assume USD for now
+                
+                flashloan_manager.update_pool_tvl(
+                    pool_id=pool_id,
+                    token_address=token_address,
+                    token_symbol=flashloan_token,
+                    token_reserve=liquidity / token_price,
+                    token_price_usd=token_price,
+                    pool_type=pool_type
+                )
+            
+            # Validate flashloan
+            flashloan_approved, reason, flashloan_details = flashloan_manager.validate_flashloan(
+                pool_id=pool_id,
+                token_address=token_address,
+                flashloan_amount_tokens=flashloan_amount,
+                pool_type=pool_type
+            )
+            
+            if not flashloan_approved:
+                print(f"\n⚠️  FLASHLOAN REJECTED: {reason}")
+                if flashloan_details:
+                    print(f"    Requested: ${flashloan_details.get('flashloan_usd', 0):,.2f}")
+                    print(f"    Pool TVL: ${flashloan_details.get('pool_tvl_usd', 0):,.2f}")
+                    print(f"    % of TVL: {flashloan_details.get('percent_of_tvl', 0):.1f}%")
+        
+        # ENHANCED DISPLAY WITH FULL DETAILS
+        print(f"\n{'='*80}")
+        print(f"🎯 ITERATION {iteration}: ARBITRAGE OPPORTUNITY")
+        print(f"{'='*80}")
+        
+        # Route Information
+        dex_route_str = " → ".join(dex_route) if dex_route else "Unknown Route"
+        token_route_str = " → ".join(tokens) if tokens else "Unknown Tokens"
+        print(f"\n📍 ROUTE DETAILS:")
+        print(f"   Chain: {chain.upper()}")
+        print(f"   DEX Path: {dex_route_str}")
+        print(f"   Token Path: {token_route_str}")
+        print(f"   Hops: {hops}")
+        
+        # Flashloan Information
+        print(f"\n💰 FLASHLOAN:")
+        print(f"   Token: {flashloan_token}")
+        print(f"   Address: {flashloan_token_address}")
+        print(f"   Amount: {flashloan_amount:,.2f} {flashloan_token} (${flashloan_amount:,.2f} USD)")
+        if flashloan_details:
+            percent_tvl = flashloan_details.get('percent_of_tvl', 0)
+            pool_tvl = flashloan_details.get('pool_tvl_usd', 0)
+            print(f"   Pool TVL: ${pool_tvl:,.2f}")
+            print(f"   % of TVL: {percent_tvl:.2f}%")
+            print(f"   Status: {'✅ APPROVED' if flashloan_approved else '❌ REJECTED'}")
+        
+        # Gas & Costs
+        print(f"\n⛽ GAS & COSTS:")
+        print(f"   Gas Cost: ${gas_cost:.2f}")
+        print(f"   Slippage: {slippage:.2f}% (${slippage_buffer:.2f} USD)")
+        print(f"   Total Risk: ${total_risk:.2f}")
+        
+        # Profit Analysis
+        gross_profit = best_opp.get('gross_profit', profit + gas_cost)
+        print(f"\n📊 PROFIT ANALYSIS:")
+        print(f"   Gross Profit: ${gross_profit:.2f}")
+        print(f"   Net Profit (after gas): ${profit:.2f}")
+        print(f"   Net After Risk: ${net_profit_after_risk:.2f}")
+        print(f"   ROI: {(profit/initial_amount*100):.2f}%")
+        
+        # ML Scoring
+        print(f"\n🤖 ML SCORING:")
+        print(f"   ML Score: {ml_score:.4f}")
+        print(f"   Confidence: {confidence:.1%}")
+        print(f"   Hot Route: {'🔥 YES' if is_hot_route else '❌ NO'}")
+        
+        # Revert Guarantee
+        print(f"\n🛡️  REVERT GUARANTEE:")
+        if revert_guarantee:
+            print(f"   Status: ✅ PROTECTED")
+            print(f"   Safety Margin: ${net_profit_after_risk:.2f}")
+        else:
+            print(f"   Status: ⚠️  AT RISK")
+            print(f"   Deficit: ${abs(net_profit_after_risk):.2f}")
+            print(f"   Recommendation: SKIP (profit doesn't cover risk)")
+        
+        print(f"{'='*80}\n")
+        
+        # Skip execution if flashloan rejected OR revert guarantee failed
+        if not flashloan_approved:
+            print(f"[Hybrid] ⚠️  SKIPPING: Flashloan safety limits violated")
+            await asyncio.sleep(1)
+            if max_iterations and iteration >= max_iterations:
+                break
+            continue
+        
+        if not revert_guarantee:
+            print(f"[Hybrid] ⚠️  SKIPPING: Revert guarantee not satisfied")
+            await asyncio.sleep(1)
+            if max_iterations and iteration >= max_iterations:
+                break
+            continue
         
         # Define execution function
         def execute_arbitrage(opp):

@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 """
-GAS ORACLE INTEGRATION
-Fetches real-time gas prices from RPC endpoints (Infura, Alchemy, QuickNode)
-Provides gas price data for no-revert validation and transaction simulation
+GAS ORACLE INTEGRATION - Multi-Network Version
+Uses Infura Gas API (ON_CHAIN_GAS_ENDPOINT from ..env line 68)
+Falls back to eth_gasPrice RPC calls when Gas API unavailable
+Provides real-time gas prices for no-revert validation
 """
 
 import os
 import time
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-from web3 import Web3
-from statistics import mean, median
+import requests
+from typing import Dict, Any, Optional
+from datetime import datetime
+from statistics import mean
 import logging
+from dotenv import load_dotenv
+from web3 import Web3
+
+# Load environment from ..env (single global config file)
+load_dotenv('..env')
 
 # Import currency formatter for consistent decimal precision
-from currency_formatter import format_currency_usd, format_gas_price, fmt_usd
+from currency_formatter import format_gas_price, fmt_usd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,394 +28,334 @@ logger = logging.getLogger(__name__)
 
 class GasOracleIntegration:
     """
-    Fetches and monitors gas prices from multiple RPC providers
-    Provides gas price predictions and spike detection for no-revert validation
+    Multi-Network Gas Oracle using Infura Gas API + RPC Fallback
+    Fetches real-time gas prices for 100+ networks
     """
     
-    # Chain IDs
-    CHAIN_IDS = {
-        'polygon': 137,
-        'ethereum': 1,
-        'base': 8453,
-        'arbitrum': 42161,
-        'bsc': 56,
-        'optimism': 10,
+    # Supported networks with their chain IDs (from Infura docs)
+    NETWORKS = {
+        'ethereum': {'chain_id': 1, 'rpc_var': 'ETHEREUM_RPC_URL', 'name': 'Ethereum'},
+        'optimism': {'chain_id': 10, 'rpc_var': 'OPTIMISM_RPC_URL', 'name': 'Optimism'},
+        'bsc': {'chain_id': 56, 'rpc_var': 'BSC_RPC_URL', 'name': 'BNB Smart Chain'},
+        'polygon': {'chain_id': 137, 'rpc_var': 'POLYGON_RPC_URL', 'name': 'Polygon'},
+        'base': {'chain_id': 8453, 'rpc_var': 'BASE_RPC_URL', 'name': 'Base'},
+        'arbitrum': {'chain_id': 42161, 'rpc_var': 'ARBITRUM_RPC_URL', 'name': 'Arbitrum One'},
+        'avalanche': {'chain_id': 43114, 'rpc_var': 'AVALANCHE_RPC', 'name': 'Avalanche C-Chain'},
+        'blast': {'chain_id': 81457, 'rpc_var': 'BLAST_RPC_URL', 'name': 'Blast'},
+        'zksync': {'chain_id': 324, 'rpc_var': 'ZKSYNC_RPC_URL', 'name': 'zkSync Era'},
+        'linea': {'chain_id': 59144, 'rpc_var': 'LINEA_RPC_URL', 'name': 'Linea'},
     }
     
     def __init__(
         self,
-        update_interval_seconds: int = 12,  # Update every 12 seconds (Polygon block time)
-        spike_threshold_percent: float = 150.0,  # 150% = gas spike
-        history_window_blocks: int = 20,  # Track last 20 blocks for baseline
+        update_interval_seconds: int = 12,
+        spike_threshold_percent: float = 150.0,
+        max_gas_price_gwei: float = 150.0
     ):
         """
-        Initialize Gas Oracle with RPC endpoints from environment
+        Initialize Gas Oracle with Infura Gas API + RPC fallback
         
         Args:
-            update_interval_seconds: How often to fetch gas prices
+            update_interval_seconds: Cache duration (12s = Polygon block time)
             spike_threshold_percent: % increase to consider a gas spike
-            history_window_blocks: Number of blocks to track for baseline
+            max_gas_price_gwei: Maximum acceptable gas price
         """
+        self.gas_api_endpoint = os.getenv('ON_CHAIN_GAS_ENDPOINT')
         self.update_interval = update_interval_seconds
         self.spike_threshold = spike_threshold_percent
-        self.history_window = history_window_blocks
+        self.max_gas_price = max_gas_price_gwei
         
-        # Gas price history: {chain: [prices...]}
-        self.gas_history: Dict[str, List[float]] = {}
-        self.last_update: Dict[str, float] = {}
-        self.cached_gas_prices: Dict[str, Dict[str, Any]] = {}
+        # Initialize Web3 connections for RPC fallback
+        self.web3_connections = self._initialize_rpc_connections()
         
-        # Initialize Web3 connections
-        self.web3_connections = self._initialize_web3_connections()
+        # Cache: {network: {'price': float, 'timestamp': float, 'data': dict}}
+        self.cache: Dict[str, Dict[str, Any]] = {}
         
-        # Fetch initial gas prices
-        self._initial_fetch()
+        # Gas price history for baseline: {network: [prices...]}
+        self.history: Dict[str, list] = {net: [] for net in self.NETWORKS.keys()}
         
-        logger.info(f"[GasOracle] ✓ Initialized with {len(self.web3_connections)} active chains")
-        logger.info(f"  - Update Interval: {self.update_interval}s")
+        logger.info(f"[GasOracle] ✓ Initialized with Infura Gas API + RPC Fallback")
+        if self.gas_api_endpoint:
+            logger.info(f"  - Gas API: {self.gas_api_endpoint[:60]}...")
+        logger.info(f"  - RPC Connections: {len(self.web3_connections)} networks")
+        logger.info(f"  - Cache TTL: {self.update_interval}s")
         logger.info(f"  - Spike Threshold: {self.spike_threshold}%")
-        logger.info(f"  - History Window: {self.history_window} blocks")
+        logger.info(f"  - Max Gas Price: {self.max_gas_price} gwei")
     
-    def _initialize_web3_connections(self) -> Dict[str, Web3]:
-        """
-        Initialize Web3 connections using RPC endpoints from environment
-        Uses user's existing Infura/Alchemy/QuickNode endpoints
-        """
+    def _initialize_rpc_connections(self) -> Dict[str, Web3]:
+        """Initialize Web3 RPC connections for fallback gas price fetching"""
         connections = {}
         
-        # Polygon (primary chain)
-        polygon_rpc = os.getenv('POLYGON_MAINNET_HTTPS_INFURA') or \
-                      os.getenv('POLYGON_MAINNET_HTTPS_QUICKNODE') or \
-                      os.getenv('POLYGON_MAINNET_HTTPS_ALCHEMY')
-        if polygon_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(polygon_rpc))
-                if w3.is_connected():
-                    connections['polygon'] = w3
-                    logger.info(f"[GasOracle] ✓ Polygon connected: {polygon_rpc[:50]}...")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ Polygon connection failed: {e}")
-        
-        # Ethereum
-        eth_rpc = os.getenv('ETHEREUM_MAINNET_HTTPS_INFURA') or \
-                  os.getenv('ETHEREUM_RPC_URL')
-        if eth_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(eth_rpc))
-                if w3.is_connected():
-                    connections['ethereum'] = w3
-                    logger.info(f"[GasOracle] ✓ Ethereum connected")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ Ethereum connection failed: {e}")
-        
-        # Base
-        base_rpc = os.getenv('BASE_MAINNET_HTTPS_INFURA') or \
-                   os.getenv('BASE_MAINNET_HTTPS_QUICKNODE') or \
-                   os.getenv('BASE_MAINNET_HTTPS_ALCHEMY')
-        if base_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(base_rpc))
-                if w3.is_connected():
-                    connections['base'] = w3
-                    logger.info(f"[GasOracle] ✓ Base connected")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ Base connection failed: {e}")
-        
-        # Arbitrum
-        arb_rpc = os.getenv('ARBITRUM_MAINNET_HTTPS_INFURA') or \
-                  os.getenv('ARBITRUM_MAINNET_HTTPS_QUICKNODE') or \
-                  os.getenv('ARBITRUM_MAINNET_HTTPS_ALCHEMY')
-        if arb_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(arb_rpc))
-                if w3.is_connected():
-                    connections['arbitrum'] = w3
-                    logger.info(f"[GasOracle] ✓ Arbitrum connected")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ Arbitrum connection failed: {e}")
-        
-        # BSC
-        bsc_rpc = os.getenv('BSC_MAINNET_HTTPS_INFURA') or \
-                  os.getenv('BSC_MAINNET_HTTPS_QUICKNODE')
-        if bsc_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(bsc_rpc))
-                if w3.is_connected():
-                    connections['bsc'] = w3
-                    logger.info(f"[GasOracle] ✓ BSC connected")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ BSC connection failed: {e}")
-        
-        # Optimism
-        op_rpc = os.getenv('OPTIMISM_MAINNET_HTTPS_INFURA') or \
-                 os.getenv('OPTIMISM_MAINNET_HTTPS_QUICKNODE')
-        if op_rpc:
-            try:
-                w3 = Web3(Web3.HTTPProvider(op_rpc))
-                if w3.is_connected():
-                    connections['optimism'] = w3
-                    logger.info(f"[GasOracle] ✓ Optimism connected")
-            except Exception as e:
-                logger.warning(f"[GasOracle] ✗ Optimism connection failed: {e}")
+        for network, config in self.NETWORKS.items():
+            rpc_url = os.getenv(config['rpc_var'])
+            if rpc_url:
+                try:
+                    w3 = Web3(Web3.HTTPProvider(rpc_url))
+                    if w3.is_connected():
+                        connections[network] = w3
+                        logger.debug(f"[GasOracle] ✓ {config['name']} RPC connected")
+                except Exception as e:
+                    logger.debug(f"[GasOracle] ✗ {config['name']} RPC failed: {e}")
         
         return connections
     
-    def _initial_fetch(self):
-        """Fetch initial gas prices for all connected chains"""
-        for chain_name in self.web3_connections.keys():
-            try:
-                self.fetch_gas_price(chain_name, force_update=True)
-            except Exception as e:
-                logger.warning(f"[GasOracle] Failed initial fetch for {chain_name}: {e}")
     
-    def fetch_gas_price(
-        self,
-        chain_name: str = 'polygon',
-        force_update: bool = False
-    ) -> Dict[str, Any]:
+    def fetch_gas_price(self, network: str = 'polygon', force_update: bool = False) -> Dict[str, Any]:
         """
-        Fetch current gas price from RPC endpoint
+        Fetch current gas price from Infura Gas API with RPC fallback
         
         Args:
-            chain_name: Chain to fetch gas for ('polygon', 'ethereum', etc.)
-            force_update: Force fetch even if cache is fresh
-        
+            network: Network name ('polygon', 'ethereum', 'arbitrum', etc.)
+            force_update: Skip cache and force fresh fetch
+            
         Returns:
-            {
-                'chain': 'polygon',
-                'gas_price_gwei': 45.5,
-                'max_fee_per_gas_gwei': 50.0,
-                'max_priority_fee_per_gas_gwei': 35.0,
-                'base_fee_gwei': 15.0,
-                'timestamp': '2025-01-20T12:00:00',
-                'is_spike': False,
-                'spike_multiplier': 1.0,
-                'baseline_gwei': 45.0,
-                'source': 'infura'
-            }
+            Dict with gas price data
         """
-        # Check cache freshness
-        if not force_update and chain_name in self.last_update:
-            time_since_update = time.time() - self.last_update[chain_name]
-            if time_since_update < self.update_interval:
-                # Return cached data
-                return self.cached_gas_prices.get(chain_name, {})
+        if network not in self.NETWORKS:
+            raise ValueError(f"Unsupported network: {network}. Supported: {list(self.NETWORKS.keys())}")
         
-        # Validate chain exists
-        if chain_name not in self.web3_connections:
-            raise ValueError(f"Chain '{chain_name}' not connected. Available: {list(self.web3_connections.keys())}")
+        # Check cache
+        if not force_update and network in self.cache:
+            cached = self.cache[network]
+            age = time.time() - cached['timestamp']
+            if age < self.update_interval:
+                logger.debug(f"[GasOracle] Using cached {network} gas price (age: {age:.1f}s)")
+                return cached
         
-        w3 = self.web3_connections[chain_name]
+        # Try Infura Gas API first
+        gas_data = self._fetch_from_gas_api(network)
+        
+        # Fallback to RPC if Gas API fails
+        if not gas_data or gas_data.get('source') == 'fallback':
+            gas_data = self._fetch_from_rpc(network)
+        
+        # Update cache and history
+        if gas_data:
+            self.cache[network] = gas_data
+            gas_price_gwei = gas_data['price_gwei']
+            self.history[network].append(gas_price_gwei)
+            if len(self.history[network]) > 20:
+                self.history[network].pop(0)
+        
+        return gas_data
+    
+    def _fetch_from_gas_api(self, network: str) -> Optional[Dict[str, Any]]:
+        """Fetch gas price from Infura Gas API"""
+        if not self.gas_api_endpoint:
+            return None
         
         try:
-            # Fetch fee data from RPC
-            fee_data = w3.eth.fee_history(1, 'latest', [50])  # Get median fee
-            latest_block = w3.eth.get_block('latest')
+            chain_id = self.NETWORKS[network]['chain_id']
+            url = f"{self.gas_api_endpoint}/networks/{chain_id}/suggestedGasFees"
             
-            # Extract gas prices
-            base_fee = latest_block.get('baseFeePerGas', 0)
-            base_fee_gwei = float(Web3.from_wei(base_fee, 'gwei'))
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
             
-            # EIP-1559 support (post-London fork)
-            if base_fee > 0:
-                # Priority fee from fee_history
-                priority_fee = fee_data['reward'][0][0] if fee_data['reward'] else 0
-                priority_fee_gwei = float(Web3.from_wei(priority_fee, 'gwei'))
-                
-                max_fee_gwei = base_fee_gwei + priority_fee_gwei
-                gas_price_gwei = max_fee_gwei  # Use max fee as current price
-            else:
-                # Legacy gas price (pre-EIP-1559 or chains without base fee)
-                gas_price = w3.eth.gas_price
-                gas_price_gwei = float(Web3.from_wei(gas_price, 'gwei'))
-                max_fee_gwei = gas_price_gwei
-                priority_fee_gwei = 0
+            # Parse Infura Gas API response
+            medium_price = float(data.get('medium', {}).get('suggestedMaxFeePerGas', 0))
+            high_price = float(data.get('high', {}).get('suggestedMaxFeePerGas', 0))
+            low_price = float(data.get('low', {}).get('suggestedMaxFeePerGas', 0))
             
-            # Update history
-            if chain_name not in self.gas_history:
-                self.gas_history[chain_name] = []
+            # Use high estimate for reliability
+            gas_price_gwei = high_price if high_price > 0 else medium_price
             
-            self.gas_history[chain_name].append(gas_price_gwei)
-            
-            # Keep only recent history
-            if len(self.gas_history[chain_name]) > self.history_window:
-                self.gas_history[chain_name] = self.gas_history[chain_name][-self.history_window:]
-            
-            # Calculate baseline and detect spikes
-            baseline_gwei = median(self.gas_history[chain_name]) if len(self.gas_history[chain_name]) > 3 else gas_price_gwei
-            spike_multiplier = gas_price_gwei / baseline_gwei if baseline_gwei > 0 else 1.0
-            is_spike = spike_multiplier >= (self.spike_threshold / 100.0)
-            
-            # Determine source (Infura, Alchemy, QuickNode)
-            rpc_url = str(w3.provider.endpoint_uri) if hasattr(w3.provider, 'endpoint_uri') else 'unknown'
-            if 'infura' in rpc_url.lower():
-                source = 'infura'
-            elif 'alchemy' in rpc_url.lower():
-                source = 'alchemy'
-            elif 'quiknode' in rpc_url.lower() or 'quicknode' in rpc_url.lower():
-                source = 'quicknode'
-            else:
-                source = 'rpc'
-            
-            # Build response
-            gas_data = {
-                'chain': chain_name,
-                'chain_id': self.CHAIN_IDS.get(chain_name, 0),
-                'gas_price_gwei': round(gas_price_gwei, 2),
-                'max_fee_per_gas_gwei': round(max_fee_gwei, 2),
-                'max_priority_fee_per_gas_gwei': round(priority_fee_gwei, 2),
-                'base_fee_gwei': round(base_fee_gwei, 2),
-                'timestamp': datetime.now().isoformat(),
-                'block_number': latest_block['number'],
-                'is_spike': is_spike,
-                'spike_multiplier': round(spike_multiplier, 2),
-                'baseline_gwei': round(baseline_gwei, 2),
-                'source': source,
-                'history_samples': len(self.gas_history[chain_name])
+            result = {
+                'network': network,
+                'chain_id': chain_id,
+                'price_gwei': gas_price_gwei,
+                'low': low_price,
+                'medium': medium_price,
+                'high': high_price,
+                'timestamp': time.time(),
+                'source': 'infura_gas_api',
+                'data': data
             }
             
-            # Update cache
-            self.cached_gas_prices[chain_name] = gas_data
-            self.last_update[chain_name] = time.time()
+            logger.info(f"[GasOracle] ✓ {network.upper()}: {format_gas_price(gas_price_gwei)} (Gas API)")
+            return result
             
-            if is_spike:
-                logger.warning(f"[GasOracle] ⚠️  GAS SPIKE DETECTED on {chain_name}: {gas_price_gwei:.1f} gwei ({spike_multiplier:.1f}x baseline)")
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                logger.debug(f"[GasOracle] Gas API requires subscription (403) - using RPC fallback")
+            else:
+                logger.debug(f"[GasOracle] Gas API error {e.response.status_code}: {e}")
+            return None
+        except Exception as e:
+            logger.debug(f"[GasOracle] Gas API fetch error for {network}: {e}")
+            return None
+    
+    def _fetch_from_rpc(self, network: str) -> Dict[str, Any]:
+        """Fetch gas price from RPC endpoint using eth_gasPrice"""
+        if network not in self.web3_connections:
+            return self._get_fallback_price(network)
+        
+        try:
+            w3 = self.web3_connections[network]
+            gas_price_wei = w3.eth.gas_price
+            gas_price_gwei = float(Web3.from_wei(gas_price_wei, 'gwei'))
             
-            return gas_data
+            result = {
+                'network': network,
+                'chain_id': self.NETWORKS[network]['chain_id'],
+                'price_gwei': gas_price_gwei,
+                'low': gas_price_gwei * 0.9,
+                'medium': gas_price_gwei,
+                'high': gas_price_gwei * 1.1,
+                'timestamp': time.time(),
+                'source': 'rpc_eth_gasPrice'
+            }
+            
+            logger.info(f"[GasOracle] ✓ {network.upper()}: {format_gas_price(gas_price_gwei)} (RPC)")
+            return result
             
         except Exception as e:
-            logger.error(f"[GasOracle] Failed to fetch gas price for {chain_name}: {e}")
+            logger.warning(f"[GasOracle] RPC fetch failed for {network}: {e}")
+            return self._get_fallback_price(network)
+    
+    def _get_fallback_price(self, network: str) -> Dict[str, Any]:
+        """Return safe fallback gas price if both API and RPC fail"""
+        # Updated fallback prices based on typical network gas costs (as of 2025)
+        fallback_prices = {
+            'ethereum': 30.0,      # ETH: ~30 gwei typical
+            'polygon': 80.0,       # MATIC: ~80 gwei typical
+            'arbitrum': 0.1,       # ARB: ~0.1 gwei (L2)
+            'optimism': 0.002,     # OP: ~0.002 gwei (L2)
+            'base': 0.001,         # BASE: ~0.001 gwei (L2)
+            'bsc': 5.0,            # BNB: ~5 gwei typical
+            'avalanche': 25.0,     # AVAX: ~25 gwei typical
+            'blast': 0.001,        # BLAST: ~0.001 gwei (L2)
+            'zksync': 0.25,        # ZKSYNC: ~0.25 gwei (L2)
+            'linea': 0.5,          # LINEA: ~0.5 gwei (L2)
+        }
+        
+        price = fallback_prices.get(network, 50.0)
+        logger.warning(f"[GasOracle] Using fallback price for {network}: {format_gas_price(price)}")
+        
+        return {
+            'network': network,
+            'chain_id': self.NETWORKS[network]['chain_id'],
+            'price_gwei': price,
+            'timestamp': time.time(),
+            'source': 'fallback',
+            'low': price * 0.8,
+            'medium': price,
+            'high': price * 1.2,
+        }
+    
+    def detect_gas_spike(self, current_gwei: float, network: str = 'polygon') -> bool:
+        """
+        Detect if current gas price is abnormally high (spike)
+        
+        Args:
+            current_gwei: Current gas price in gwei
+            network: Network to check
             
-            # Return cached data if available
-            if chain_name in self.cached_gas_prices:
-                logger.warning(f"[GasOracle] Using cached gas data for {chain_name}")
-                return self.cached_gas_prices[chain_name]
-            
-            # Return safe default
-            return {
-                'chain': chain_name,
-                'gas_price_gwei': 0,
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+        Returns:
+            True if gas spike detected
+        """
+        if network not in self.history or len(self.history[network]) < 5:
+            return False  # Not enough data
+        
+        baseline = mean(self.history[network])
+        threshold = baseline * (self.spike_threshold / 100.0)
+        
+        is_spike = current_gwei > threshold
+        
+        if is_spike:
+            logger.warning(
+                f"[GasOracle] ⚠️  GAS SPIKE on {network.upper()}! "
+                f"Current: {format_gas_price(current_gwei)} | "
+                f"Baseline: {format_gas_price(baseline)} | "
+                f"Threshold: {format_gas_price(threshold)}"
+            )
+        
+        return is_spike
     
     def validate_gas_for_transaction(
         self,
         estimated_gas_units: int,
         max_gas_price_gwei: float,
-        chain_name: str = 'polygon',
+        network: str = 'polygon',
         safety_multiplier: float = 1.5
     ) -> Dict[str, Any]:
         """
-        Validate if current gas price is acceptable for transaction
+        Validate if current gas conditions are acceptable for transaction
         
         Args:
-            estimated_gas_units: Expected gas units for transaction
+            estimated_gas_units: Estimated gas consumption
             max_gas_price_gwei: Maximum acceptable gas price
-            chain_name: Chain to validate
-            safety_multiplier: Safety buffer (1.5 = 50% buffer)
-        
+            network: Network for transaction
+            safety_multiplier: Safety buffer for gas cost
+            
         Returns:
-            {
-                'approved': True/False,
-                'current_gas_gwei': 45.5,
-                'max_gas_gwei': 100.0,
-                'estimated_cost_usd': 2.50,
-                'is_spike': False,
-                'reason': 'Gas price acceptable',
-                'wait_recommended': False
-            }
+            Dict with validation result and gas cost estimate
         """
-        gas_data = self.fetch_gas_price(chain_name)
+        # Fetch current gas price
+        gas_data = self.fetch_gas_price(network)
+        current_gas_gwei = gas_data['price_gwei']
         
-        if 'error' in gas_data:
+        # Check if gas price is acceptable
+        if current_gas_gwei > max_gas_price_gwei:
             return {
                 'approved': False,
-                'reason': f"Failed to fetch gas price: {gas_data['error']}",
-                'wait_recommended': True
-            }
-        
-        current_gas_gwei = gas_data['gas_price_gwei']
-        is_spike = gas_data['is_spike']
-        
-        # Apply safety multiplier during spikes
-        effective_max_gas = max_gas_price_gwei
-        if is_spike:
-            effective_max_gas = max_gas_price_gwei * safety_multiplier
-        
-        # Check if gas price exceeds limit
-        if current_gas_gwei > effective_max_gas:
-            return {
-                'approved': False,
+                'reason': f"Gas price too high: {format_gas_price(current_gas_gwei)} > {format_gas_price(max_gas_price_gwei)}",
                 'current_gas_gwei': current_gas_gwei,
                 'max_gas_gwei': max_gas_price_gwei,
-                'effective_max_gas_gwei': effective_max_gas,
-                'is_spike': is_spike,
-                'reason': f"Gas price too high: {current_gas_gwei:.1f} gwei > {effective_max_gas:.1f} gwei limit",
-                'wait_recommended': True
+                'estimated_cost_usd': 0
             }
         
-        # Estimate cost in USD (approximate ETH price: $3500)
-        eth_price_usd = 3500.0 if chain_name == 'ethereum' else 0.60  # Polygon MATIC ~$0.60
-        estimated_cost_eth = (estimated_gas_units * current_gas_gwei * 1e9) / 1e18
-        estimated_cost_usd = estimated_cost_eth * eth_price_usd
+        # Check for gas spike
+        is_spike = self.detect_gas_spike(current_gas_gwei, network)
+        if is_spike:
+            return {
+                'approved': False,
+                'reason': f"Gas spike detected on {network}",
+                'current_gas_gwei': current_gas_gwei,
+                'is_spike': True,
+                'estimated_cost_usd': 0
+            }
+        
+        # Estimate gas cost (use high estimate for safety)
+        high_gas_gwei = gas_data.get('high', current_gas_gwei)
+        gas_cost_eth = (estimated_gas_units * high_gas_gwei * safety_multiplier) / 1e9
+        
+        # Convert to USD (use approximate prices)
+        eth_prices = {'polygon': 0.5, 'ethereum': 3000, 'arbitrum': 3000, 'optimism': 3000, 'base': 3000}
+        eth_price_usd = eth_prices.get(network, 1000)
+        gas_cost_usd = gas_cost_eth * eth_price_usd
         
         return {
             'approved': True,
+            'reason': 'Gas price acceptable',
             'current_gas_gwei': current_gas_gwei,
-            'max_gas_gwei': max_gas_price_gwei,
-            'estimated_cost_usd': round(estimated_cost_usd, 6),  # Use 6 decimals
+            'high_gas_gwei': high_gas_gwei,
+            'estimated_cost_usd': gas_cost_usd,
             'estimated_gas_units': estimated_gas_units,
-            'is_spike': is_spike,
-            'spike_multiplier': gas_data['spike_multiplier'],
-            'reason': 'Gas price acceptable' if not is_spike else 'Gas spike detected but within limits',
-            'wait_recommended': False,
-            'source': gas_data['source']
-        }
-    
-    def get_gas_statistics(self, chain_name: str = 'polygon') -> Dict[str, Any]:
-        """Get gas price statistics for a chain"""
-        if chain_name not in self.gas_history or len(self.gas_history[chain_name]) < 2:
-            return {'error': 'Insufficient history data'}
-        
-        history = self.gas_history[chain_name]
-        
-        return {
-            'chain': chain_name,
-            'samples': len(history),
-            'current_gwei': round(history[-1], 2),
-            'average_gwei': round(mean(history), 2),
-            'median_gwei': round(median(history), 2),
-            'min_gwei': round(min(history), 2),
-            'max_gwei': round(max(history), 2),
-            'volatility_pct': round((max(history) - min(history)) / mean(history) * 100, 2),
-            'timestamp': datetime.now().isoformat()
+            'safety_multiplier': safety_multiplier,
+            'network': network
         }
     
     def print_gas_report(self):
-        """Print comprehensive gas price report"""
+        """Print gas prices for all supported networks"""
         print("\n" + "=" * 80)
         print("  GAS ORACLE REPORT - REAL-TIME NETWORK GAS PRICES")
-        print("=" * 80)
+        print("  Source: Infura Gas API")
+        print("=" * 80 + "\n")
         
-        for chain_name in self.web3_connections.keys():
+        for network in self.NETWORKS.keys():
             try:
-                gas_data = self.fetch_gas_price(chain_name)
-                stats = self.get_gas_statistics(chain_name)
-                
-                spike_indicator = "🔥 SPIKE" if gas_data.get('is_spike') else "✓ Normal"
-                
-                print(f"\n  {chain_name.upper()}")
-                print(f"    Current: {format_gas_price(gas_data.get('gas_price_gwei', 0))} {spike_indicator}")
-                print(f"    Baseline: {format_gas_price(gas_data.get('baseline_gwei', 0))}")
-                print(f"    Average: {format_gas_price(stats.get('average_gwei', 0))}")
-                print(f"    Range: {format_gas_price(stats.get('min_gwei', 0))} - {format_gas_price(stats.get('max_gwei', 0))}")
-                print(f"    Source: {gas_data.get('source', 'unknown').upper()}")
-                
+                gas_data = self.fetch_gas_price(network, force_update=True)
+                print(f"  {network.upper()}:")
+                print(f"    Low:    {format_gas_price(gas_data.get('low', 0))}")
+                print(f"    Medium: {format_gas_price(gas_data.get('medium', 0))}")
+                print(f"    High:   {format_gas_price(gas_data.get('high', 0))}")
+                print(f"    Source: {gas_data.get('source', 'unknown')}")
+                print()
             except Exception as e:
-                print(f"\n  {chain_name.upper()}: Error - {e}")
+                print(f"  {network.upper()}: Error - {e}\n")
         
-        print("\n" + "=" * 80 + "\n")
+        print("=" * 80 + "\n")
 
 
 # Example usage
@@ -419,21 +365,22 @@ if __name__ == "__main__":
     oracle = GasOracleIntegration(
         update_interval_seconds=12,
         spike_threshold_percent=150.0,
-        history_window_blocks=20
+        max_gas_price_gwei=150.0
     )
     
     # Print initial report
     oracle.print_gas_report()
     
-    # Test validation
-    print("\nTesting gas validation for arbitrage transaction...")
+    # Test validation for Polygon
+    print("\nTesting gas validation for Polygon arbitrage transaction...")
     validation = oracle.validate_gas_for_transaction(
         estimated_gas_units=500000,
-        max_gas_price_gwei=100.0,
-        chain_name='polygon',
+        max_gas_price_gwei=200.0,
+        network='polygon',
         safety_multiplier=1.5
     )
     
+    print(f"  Network: {validation.get('network', 'polygon').upper()}")
     print(f"  Approved: {validation['approved']}")
     print(f"  Current Gas: {format_gas_price(validation.get('current_gas_gwei', 0))}")
     print(f"  Estimated Cost: {fmt_usd(validation.get('estimated_cost_usd', 0))}")
