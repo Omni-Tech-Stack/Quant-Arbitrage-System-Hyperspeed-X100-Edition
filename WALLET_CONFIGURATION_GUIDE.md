@@ -63,7 +63,7 @@ python3 spring_training_launcher.py --duration 300
 ### **3. For Production Trading** ⚠️
 **ONLY when you're ready for real money:**
 
-Edit `..env`:
+Edit `.env`:
 ```properties
 MODE=LIVE
 LIVE_EXECUTION=true
@@ -147,7 +147,7 @@ python3 quad_turbo_rs_engine.py --duration 3600
 
 ### Phase 3: Production (When Ready) ⚠️
 ```bash
-# Change MODE=LIVE in ..env
+# Change MODE=LIVE in .env
 # Restart system
 python3 main_quant_hybrid_orchestrator.py
 
@@ -175,7 +175,7 @@ python3 main_quant_hybrid_orchestrator.py
 
 ## 📁 Files Modified
 
-1. **`..env`**: Added wallet configuration with mode-based switching
+1. **`.env`**: Added wallet configuration with mode-based switching
 2. **`config/wallet_manager.py`**: New wallet manager module
 3. **Documentation**: This guide
 
@@ -207,20 +207,20 @@ python3 config/wallet_manager.py
 
 ### Check Mode:
 ```bash
-grep "^MODE=" ..env
+grep "^MODE=" .env
 ```
 
 ### Switch to SIM Mode (Safe):
 ```bash
-sed -i 's/MODE=LIVE/MODE=DEV/' ..env
-sed -i 's/LIVE_EXECUTION=true/LIVE_EXECUTION=false/' ..env
+sed -i 's/MODE=LIVE/MODE=DEV/' .env
+sed -i 's/LIVE_EXECUTION=true/LIVE_EXECUTION=false/' .env
 ```
 
 ### Switch to LIVE Mode (Danger):
 ```bash
 # Only do this when ready!
-sed -i 's/MODE=DEV/MODE=LIVE/' ..env
-sed -i 's/LIVE_EXECUTION=false/LIVE_EXECUTION=true/' ..env
+sed -i 's/MODE=DEV/MODE=LIVE/' .env
+sed -i 's/LIVE_EXECUTION=false/LIVE_EXECUTION=true/' .env
 ```
 
 ---
