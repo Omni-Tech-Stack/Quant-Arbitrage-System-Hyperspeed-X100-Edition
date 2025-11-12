@@ -815,3 +815,56 @@ mod tests {
         }
     }
 }
+
+/// Batch process multiple arbitrage opportunities for optimized performance
+/// Returns Vec<(should_execute, optimal_amount, expected_profit)>
+pub fn batch_evaluate_opportunities(
+    opportunities: &[(f64, f64, f64, f64)], // (pool1_res_in, pool1_res_out, pool2_res_in, pool2_res_out)
+    config: &ArbitrageConfig,
+) -> Vec<(bool, f64, f64)> {
+    opportunities
+        .iter()
+        .map(|(p1_in, p1_out, p2_in, p2_out)| {
+            let (has_opp, _, direction) = identify_arbitrage_opportunity(
+                *p1_in,
+                *p1_out,
+                *p2_in,
+                *p2_out,
+                config.min_price_diff_pct,
+            );
+
+            if !has_opp {
+                return (false, 0.0, 0.0);
+            }
+
+            let (buy_res_in, buy_res_out, sell_res_in, sell_res_out) = if direction == 1 {
+                (*p1_in, *p1_out, *p2_in, *p2_out)
+            } else {
+                (*p2_in, *p2_out, *p1_in, *p1_out)
+            };
+
+            let optimal_amount = optimize_trade_size_quadratic(
+                buy_res_in,
+                buy_res_out,
+                sell_res_in,
+                sell_res_out,
+                config.gas_cost,
+                config.flashloan_fee_pct,
+            );
+
+            let profit = estimate_arbitrage_profit(
+                buy_res_in,
+                buy_res_out,
+                sell_res_in,
+                sell_res_out,
+                optimal_amount,
+                config.gas_cost,
+                config.flashloan_fee_pct,
+            );
+
+            let should_execute = profit >= config.min_profit_threshold;
+
+            (should_execute, optimal_amount, profit)
+        })
+        .collect()
+}

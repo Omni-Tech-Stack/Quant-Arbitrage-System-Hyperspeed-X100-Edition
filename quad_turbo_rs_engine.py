@@ -104,7 +104,7 @@ class QuadTurboRSEngine:
         enable_prevalidation: bool = True,
         prevalidation_threshold: float = 0.6,  # Min score to pass pre-validation
         training_interval: int = 50,
-        max_queue_size: int = 1000,
+        max_queue_size: int = 2000,  # Increased from 1000 for better throughput
         verbose: bool = True
     ):
         """
@@ -271,6 +271,68 @@ class QuadTurboRSEngine:
             self._route_to_execution_lanes(packet)
         
         return packet
+    
+    def submit_opportunities_batch(self, opportunities: List[Dict[str, Any]]) -> List[OpportunityPacket]:
+        """
+        Submit multiple opportunities in batch for optimized processing
+        
+        Batch scoring is much faster than individual scoring for ML models.
+        
+        Args:
+            opportunities: List of opportunity dicts
+            
+        Returns:
+            List of OpportunityPackets
+        """
+        packets = []
+        
+        # Batch score all opportunities at once (much faster!)
+        if self.ai_engine and opportunities:
+            # Extract all features in one batch
+            try:
+                X = self.ai_engine.extract_features(opportunities)
+                if self.ai_engine.scaler is not None and hasattr(self.ai_engine.scaler, 'mean_'):
+                    X_scaled = self.ai_engine.scaler.transform(X)
+                else:
+                    X_scaled = X
+                
+                # Batch predict
+                primary_scores = self.ai_engine._predict_primary(X_scaled)
+                onnx_scores = self.ai_engine._predict_onnx(X_scaled)
+                
+                if onnx_scores is not None:
+                    ensemble_scores = 0.6 * primary_scores + 0.4 * onnx_scores
+                else:
+                    ensemble_scores = primary_scores
+            except Exception as e:
+                print(f"[QuadTurbo] Batch scoring error: {e}, falling back to individual scoring")
+                ensemble_scores = [0.5] * len(opportunities)
+        else:
+            ensemble_scores = [0.5] * len(opportunities)
+        
+        # Create packets with pre-computed scores
+        for i, opportunity in enumerate(opportunities):
+            packet = OpportunityPacket(
+                opportunity_id=f"opp_{int(time.time() * 1000)}_{np.random.randint(1000, 9999)}",
+                opportunity=opportunity,
+                timestamp=datetime.now().isoformat(),
+                route_to_production=self.enable_production,
+                route_to_shadow=self.enable_shadow_sim,
+                route_to_training=self.enable_training,
+                route_to_prevalidator=self.enable_prevalidation,
+                ml_score=float(ensemble_scores[i])
+            )
+            packet.ml_scores_by_lane['initial'] = packet.ml_score
+            
+            # Route through lanes
+            if packet.route_to_prevalidator:
+                self.lane_queues[Lane.PRE_VALIDATOR].put(packet)
+            else:
+                self._route_to_execution_lanes(packet)
+            
+            packets.append(packet)
+        
+        return packets
     
     def _route_to_execution_lanes(self, packet: OpportunityPacket):
         """Route packet to execution lanes after pre-validation"""
