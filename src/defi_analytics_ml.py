@@ -114,16 +114,6 @@ try:
 except ImportError:
     DUAL_AI_AVAILABLE = False
     print("[ML] Warning: Dual AI engine not available, using fallback")
-import pickle
-import os
-import sys
-from datetime import datetime
-
-# Try to import the model class for unpickling
-try:
-    from ml_model import SimpleArbitrageModel
-except ImportError:
-    SimpleArbitrageModel = None
 
 
 class MLAnalyticsEngine:
