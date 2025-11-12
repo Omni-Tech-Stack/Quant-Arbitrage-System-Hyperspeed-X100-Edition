@@ -174,11 +174,14 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
     while True:
         iteration += 1
         
-        # Detect opportunities
+        # Detect opportunities (run in thread pool to avoid blocking)
         try:
             from src.advanced_opportunity_detection_Version1 import OpportunityDetector
             if integrator:
-                opportunities = OpportunityDetector(integrator).detect_opportunities()
+                # Run CPU-intensive opportunity detection in thread pool
+                opportunities = await asyncio.to_thread(
+                    OpportunityDetector(integrator).detect_opportunities
+                )
             else:
                 opportunities = []
         except ImportError:
@@ -192,10 +195,12 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
                 break
             continue
         
-        # Score opportunities with ML
+        # Score opportunities with ML (also run in thread pool for better concurrency)
         best_opp = None
         if ml_engine and hasattr(ml_engine, 'score_opportunities'):
-            best_opp = ml_engine.score_opportunities(opportunities)
+            best_opp = await asyncio.to_thread(
+                ml_engine.score_opportunities, opportunities
+            )
         
         # If ML didn't return a result or no ML engine, use highest profit
         if not best_opp and opportunities:
