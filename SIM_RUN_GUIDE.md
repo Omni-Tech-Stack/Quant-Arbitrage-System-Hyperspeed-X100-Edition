@@ -63,9 +63,9 @@ kill 171993
 kill $(pgrep -f main_quant_hybrid_orchestrator)
 ```
 
-### Step 2: Change MODE in ..env
+### Step 2: Change MODE in .env
 ```bash
-# Open ..env and change:
+# Open .env and change:
 MODE=SIM  →  MODE=LIVE
 ```
 
@@ -116,7 +116,7 @@ tail -f full_system_LIVE.log
 |------|---------|
 | `full_system_sim_72hr.log` | Complete system log |
 | `monitor_system.sh` | Quick dashboard script |
-| `..env` | Configuration (MODE=SIM/LIVE) |
+| `.env` | Configuration (MODE=SIM/LIVE) |
 | `main_quant_hybrid_orchestrator.py` | Main system orchestrator |
 
 ---

@@ -7,9 +7,9 @@ import os
 from typing import Dict, Tuple
 from dotenv import load_dotenv
 
-# Load environment variables from ..env file
+# Load environment variables from .env file
 load_dotenv('../.env')
-load_dotenv('..env')  # Fallback
+load_dotenv('.env')  # Fallback
 
 
 class WalletManager:

@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
+# Keep backend's package-lock.json, exclude others
 package-lock.json
+!backend/package-lock.json
 
 # Hardhat
 cache/

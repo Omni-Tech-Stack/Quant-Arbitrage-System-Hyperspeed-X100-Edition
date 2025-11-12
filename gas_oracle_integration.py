@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 GAS ORACLE INTEGRATION - Multi-Network Version
-Uses Infura Gas API (ON_CHAIN_GAS_ENDPOINT from ..env line 68)
+Uses Infura Gas API (ON_CHAIN_GAS_ENDPOINT from .env line 68)
 Falls back to eth_gasPrice RPC calls when Gas API unavailable
 Provides real-time gas prices for no-revert validation
 """
@@ -16,8 +16,8 @@ import logging
 from dotenv import load_dotenv
 from web3 import Web3
 
-# Load environment from ..env (single global config file)
-load_dotenv('..env')
+# Load environment from .env (single global config file)
+load_dotenv('.env')
 
 # Import currency formatter for consistent decimal precision
 from currency_formatter import format_gas_price, fmt_usd
