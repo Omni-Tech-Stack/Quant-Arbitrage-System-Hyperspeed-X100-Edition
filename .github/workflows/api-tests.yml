@@ -64,6 +64,9 @@ jobs:
         working-directory: ./backend
         run: npm ci
 
+      - name: Ensure test-results directory exists
+        run: mkdir -p ./backend/test-results
+
       - name: Run comprehensive tests
         working-directory: ./backend
         run: npm test
@@ -115,11 +118,10 @@ jobs:
 
       - name: Check test results
         if: always()
-        working-directory: ./backend/test-results
         run: |
-          if [ -f comprehensive-report.json ]; then
+          if [ -f ./backend/test-results/comprehensive-report.json ]; then
             # Parse JSON and check for failures
-            FAILED=$(cat comprehensive-report.json | grep -o '"allPassed":[^,}]*' | cut -d':' -f2)
+            FAILED=$(cat ./backend/test-results/comprehensive-report.json | grep -o '"allPassed":[^,}]*' | cut -d':' -f2)
             if [ "$FAILED" = "false" ]; then
               echo "❌ Tests failed!"
               exit 1
@@ -214,6 +216,9 @@ jobs:
       - name: Install dependencies
         working-directory: ./backend
         run: npm ci
+
+      - name: Ensure test-results directory exists
+        run: mkdir -p ./backend/test-results
 
       - name: Run performance benchmark
         working-directory: ./backend

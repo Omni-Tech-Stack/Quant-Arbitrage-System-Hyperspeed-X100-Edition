@@ -343,6 +343,13 @@ async function main() {
   log(`Target API: ${API_BASE_URL}\n`, COLORS.cyan);
   
   try {
+    // Step 0: Ensure test-results directory exists
+    const resultsDir = path.join(__dirname, '../test-results');
+    if (!fs.existsSync(resultsDir)) {
+      fs.mkdirSync(resultsDir, { recursive: true });
+      log('Created test-results directory', COLORS.cyan);
+    }
+    
     // Step 1: Ensure server is running
     const serverReady = await ensureServerRunning();
     if (!serverReady) {
