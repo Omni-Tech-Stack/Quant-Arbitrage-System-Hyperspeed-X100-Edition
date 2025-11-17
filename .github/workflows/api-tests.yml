@@ -28,6 +28,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Rust registry + native target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ultra-fast-arbitrage-engine/native/target
+          key: v0-rust-${{ runner.os }}-native-${{ hashFiles('ultra-fast-arbitrage-engine/native/Cargo.toml') }}
+          restore-keys: |
+            v0-rust-${{ runner.os }}-native-
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -46,7 +57,18 @@ jobs:
 
       - name: Build Rust backend
         working-directory: ./ultra-fast-arbitrage-engine/native
+        env:
+          CARGO_MANIFEST_DIR: ./ultra-fast-arbitrage-engine/native
         run: cargo build --release
+
+      - name: Copy Rust artifacts to backend
+        run: |
+          # create dest folder in backend where tests expect native module
+          mkdir -p backend/native
+          # copy linux .so or fallback to other platforms
+          cp ultra-fast-arbitrage-engine/native/target/release/libmath_engine.so backend/native/math_engine.node 2>/dev/null || \
+          cp ultra-fast-arbitrage-engine/native/target/release/libmath_engine.dylib backend/native/math_engine.node 2>/dev/null || \
+          cp ultra-fast-arbitrage-engine/native/target/release/math_engine.dll backend/native/math_engine.node 2>/dev/null || true
 
       - name: Copy Rust artifacts
         working-directory: ./ultra-fast-arbitrage-engine
@@ -69,16 +91,25 @@ jobs:
 
       - name: Run comprehensive tests
         working-directory: ./backend
-        run: npm test
         env:
           API_BASE_URL: http://localhost:3001
+        run: |
+          mkdir -p test-results
+          # run tests and capture output to test-results/ci-tests.log
+          node tests/run-all-tests.js 2>&1 | tee test-results/ci-tests.log
+          # preserve exit code from tests
+          if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+            echo "Tests failed. Printing last 200 lines of log:"
+            tail -n 200 test-results/ci-tests.log
+            exit 1
+          fi
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results-node-${{ matrix.node-version }}
-          path: backend/test-results/unit-test-results-*.json
+          path: backend/test-results/*
           retention-days: 30
           overwrite: true
 
@@ -118,10 +149,10 @@ jobs:
 
       - name: Check test results
         if: always()
+        working-directory: ./backend
         run: |
-          if [ -f ./backend/test-results/comprehensive-report.json ]; then
-            # Parse JSON and check for failures
-            FAILED=$(cat ./backend/test-results/comprehensive-report.json | grep -o '"allPassed":[^,}]*' | cut -d':' -f2)
+          if [ -f test-results/comprehensive-report.json ]; then
+            FAILED=$(cat test-results/comprehensive-report.json | grep -o '"allPassed":[^,}]*' | cut -d':' -f2)
             if [ "$FAILED" = "false" ]; then
               echo "❌ Tests failed!"
               exit 1
@@ -129,7 +160,9 @@ jobs:
               echo "✅ All tests passed!"
             fi
           else
-            echo "❌ Test results not found!"
+            echo "❌ Test results not found! Dumping ci-tests.log for debugging:"
+            [ -f test-results/ci-tests.log ] && tail -n 400 test-results/ci-tests.log || echo "No log found"
+            ls -la
             exit 1
           fi
 
@@ -183,6 +216,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Rust registry + native target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ultra-fast-arbitrage-engine/native/target
+          key: v0-rust-${{ runner.os }}-native-${{ hashFiles('ultra-fast-arbitrage-engine/native/Cargo.toml') }}
+          restore-keys: |
+            v0-rust-${{ runner.os }}-native-
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -199,7 +243,18 @@ jobs:
 
       - name: Build Rust backend
         working-directory: ./ultra-fast-arbitrage-engine/native
+        env:
+          CARGO_MANIFEST_DIR: ./ultra-fast-arbitrage-engine/native
         run: cargo build --release
+
+      - name: Copy Rust artifacts to backend
+        run: |
+          # create dest folder in backend where tests expect native module
+          mkdir -p backend/native
+          # copy linux .so or fallback to other platforms
+          cp ultra-fast-arbitrage-engine/native/target/release/libmath_engine.so backend/native/math_engine.node 2>/dev/null || \
+          cp ultra-fast-arbitrage-engine/native/target/release/libmath_engine.dylib backend/native/math_engine.node 2>/dev/null || \
+          cp ultra-fast-arbitrage-engine/native/target/release/math_engine.dll backend/native/math_engine.node 2>/dev/null || true
 
       - name: Copy Rust artifacts
         working-directory: ./ultra-fast-arbitrage-engine
@@ -222,7 +277,9 @@ jobs:
 
       - name: Run performance benchmark
         working-directory: ./backend
-        run: npm test 2>&1 | tee performance.log
+        run: |
+          mkdir -p test-results
+          npm test 2>&1 | tee performance.log
 
       - name: Extract performance metrics
         working-directory: ./backend
