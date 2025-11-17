@@ -14,7 +14,7 @@ import logging
 from dotenv import load_dotenv
 from statistics import mean, stdev
 
-load_dotenv('..env')
+load_dotenv('.env')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

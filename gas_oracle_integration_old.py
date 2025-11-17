@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 GAS ORACLE INTEGRATION
-Fetches real-time gas prices from Infura Gas API (line 68 in ..env)
+Fetches real-time gas prices from Infura Gas API (line 68 in .env)
 Provides gas price data for no-revert validation and transaction simulation
 """
 
@@ -14,8 +14,8 @@ from statistics import mean, median
 import logging
 from dotenv import load_dotenv
 
-# Load environment from ..env (single global config file)
-load_dotenv('..env')
+# Load environment from .env (single global config file)
+load_dotenv('.env')
 
 # Import currency formatter for consistent decimal precision
 from currency_formatter import format_currency_usd, format_gas_price, fmt_usd
@@ -77,7 +77,7 @@ class GasOracleIntegration:
     def _initialize_web3_connections(self) -> Dict[str, Web3]:
         """
         Initialize Web3 connections using RPC endpoints from environment
-        Uses global ..env file configuration
+        Uses global .env file configuration
         """
         connections = {}
         
