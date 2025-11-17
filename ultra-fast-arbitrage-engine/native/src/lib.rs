@@ -315,3 +315,41 @@ pub fn execute_arbitrage_flow(
         expected_profit,
     ]
 }
+
+#[napi]
+pub fn batch_evaluate_opportunities(
+    opportunities: Vec<Vec<f64>>,  // Each inner vec: [pool1_res_in, pool1_res_out, pool2_res_in, pool2_res_out]
+    config: ArbitrageConfig,
+) -> Vec<Vec<f64>> {
+    let opp_tuples: Vec<(f64, f64, f64, f64)> = opportunities
+        .iter()
+        .filter_map(|opp| {
+            if opp.len() >= 4 {
+                Some((opp[0], opp[1], opp[2], opp[3]))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let math_config = math::ArbitrageConfig {
+        gas_cost: config.gas_cost,
+        flashloan_fee_pct: config.flashloan_fee_pct,
+        min_price_diff_pct: config.min_price_diff_pct,
+        max_twap_deviation_pct: config.max_twap_deviation_pct,
+        min_profit_threshold: config.min_profit_threshold,
+    };
+
+    let results = math::batch_evaluate_opportunities(&opp_tuples, &math_config);
+
+    results
+        .iter()
+        .map(|(should_execute, optimal_amount, profit)| {
+            vec![
+                if *should_execute { 1.0 } else { 0.0 },
+                *optimal_amount,
+                *profit,
+            ]
+        })
+        .collect()
+}

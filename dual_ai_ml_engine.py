@@ -67,6 +67,10 @@ class DualAIMLEngine:
             'volatility_indicator'
         ]
         
+        # Add feature cache for ultra-fast repeated scoring
+        self._feature_cache = {}
+        self._cache_max_size = 1000
+        
         os.makedirs(model_dir, exist_ok=True)
         self._load_or_initialize_models()
     
@@ -112,7 +116,7 @@ class DualAIMLEngine:
     
     def extract_features(self, opportunities: List[Dict[str, Any]]) -> np.ndarray:
         """
-        Extract and engineer features from opportunities
+        Extract and engineer features from opportunities (optimized with caching)
         
         Args:
             opportunities: List of opportunity dictionaries
@@ -123,6 +127,14 @@ class DualAIMLEngine:
         features = []
         
         for opp in opportunities:
+            # Create cache key from opportunity signature
+            cache_key = self._generate_cache_key(opp)
+            
+            # Check cache first
+            if cache_key in self._feature_cache:
+                features.append(self._feature_cache[cache_key])
+                continue
+            
             # Basic features
             hops = opp.get('hops', 3)
             gross_profit = opp.get('gross_profit', 0)
@@ -150,6 +162,9 @@ class DualAIMLEngine:
                 volatility_indicator
             ]
             
+            # Cache the feature vector
+            if len(self._feature_cache) < self._cache_max_size:
+                self._feature_cache[cache_key] = feature_vector
             features.append(feature_vector)
         
         return np.array(features, dtype=np.float32)
@@ -196,6 +211,19 @@ class DualAIMLEngine:
         else:
             # If no price history, return 0.0 (no volatility info)
             return 0.0
+    
+    def _generate_cache_key(self, opp: Dict[str, Any]) -> str:
+        """Generate cache key for opportunity features"""
+        # Use path + tokens as unique identifier (assuming these define the route)
+        path = opp.get('path', [])
+        tokens = opp.get('tokens', [])
+        hops = opp.get('hops', 0)
+        
+        # Create a simple hash key
+        path_str = '-'.join([p.get('id', str(i)) if isinstance(p, dict) else str(i) for i, p in enumerate(path)])
+        token_str = '-'.join(tokens)
+        
+        return f"{path_str}:{token_str}:{hops}"
     
     def score_opportunities(self, opportunities: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """

@@ -17,34 +17,38 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-def run_js_pool_fetcher():
-    """Run JavaScript pool fetcher to aggregate liquidity pool data"""
+async def run_js_pool_fetcher():
+    """Run JavaScript pool fetcher to aggregate liquidity pool data (async)"""
     print("[Hybrid] Running JS pool fetcher...")
     try:
-        result = subprocess.run(["node", "dex_pool_fetcher.js"], 
-                              check=False, 
-                              capture_output=True, 
-                              text=True)
-        if result.returncode == 0:
+        process = await asyncio.create_subprocess_exec(
+            "node", "dex_pool_fetcher.js",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
             print("[Hybrid] ✓ Pool fetcher completed successfully")
         else:
-            print(f"[Hybrid] ⚠ Pool fetcher returned code {result.returncode}")
+            print(f"[Hybrid] ⚠ Pool fetcher returned code {process.returncode}")
     except FileNotFoundError:
         print("[Hybrid] ⚠ dex_pool_fetcher.js not found - skipping")
 
 
-def load_sdk_pool_info():
-    """Load pools via SDK loader for ultra-low-latency access"""
+async def load_sdk_pool_info():
+    """Load pools via SDK loader for ultra-low-latency access (async)"""
     print("[Hybrid] Loading pools via SDK loader...")
     try:
-        result = subprocess.run(["node", "sdk_pool_loader.js"], 
-                              check=False,
-                              capture_output=True,
-                              text=True)
-        if result.returncode == 0:
+        process = await asyncio.create_subprocess_exec(
+            "node", "sdk_pool_loader.js",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
             print("[Hybrid] ✓ SDK pool loader completed successfully")
         else:
-            print(f"[Hybrid] ⚠ SDK pool loader returned code {result.returncode}")
+            print(f"[Hybrid] ⚠ SDK pool loader returned code {process.returncode}")
     except FileNotFoundError:
         print("[Hybrid] ⚠ sdk_pool_loader.js not found - skipping")
 
@@ -66,10 +70,12 @@ def run_precheck(chain="polygon"):
 async def arbitrage_main_loop(test_mode=False, mode=None):
     """Main arbitrage event loop with pool discovery, opportunity detection, and execution"""
     
-    # Initialize components
-    run_js_pool_fetcher()
-    load_sdk_pool_info()
-    run_precheck(chain="polygon")
+    # Initialize components - Run in parallel for faster startup
+    await asyncio.gather(
+        run_js_pool_fetcher(),
+        load_sdk_pool_info(),
+        asyncio.to_thread(run_precheck, chain="polygon")
+    )
     
     # Load configuration
     try:
@@ -168,11 +174,14 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
     while True:
         iteration += 1
         
-        # Detect opportunities
+        # Detect opportunities (run in thread pool to avoid blocking)
         try:
             from src.advanced_opportunity_detection_Version1 import OpportunityDetector
             if integrator:
-                opportunities = OpportunityDetector(integrator).detect_opportunities()
+                # Run CPU-intensive opportunity detection in thread pool
+                opportunities = await asyncio.to_thread(
+                    OpportunityDetector(integrator).detect_opportunities
+                )
             else:
                 opportunities = []
         except ImportError:
@@ -186,10 +195,12 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
                 break
             continue
         
-        # Score opportunities with ML
+        # Score opportunities with ML (also run in thread pool for better concurrency)
         best_opp = None
         if ml_engine and hasattr(ml_engine, 'score_opportunities'):
-            best_opp = ml_engine.score_opportunities(opportunities)
+            best_opp = await asyncio.to_thread(
+                ml_engine.score_opportunities, opportunities
+            )
         
         # If ML didn't return a result or no ML engine, use highest profit
         if not best_opp and opportunities:
@@ -434,12 +445,14 @@ async def arbitrage_main_loop(test_mode=False, mode=None):
             except Exception as e:
                 print(f"[Hybrid] ⚠ Reward distribution error: {e}")
         
-        # Periodic refresh of pool data (every 5 minutes)
+        # Periodic refresh of pool data (every 5 minutes) - Run in parallel
         if time.time() % 300 < 2:
-            run_js_pool_fetcher()
-            load_sdk_pool_info()
+            await asyncio.gather(
+                run_js_pool_fetcher(),
+                load_sdk_pool_info()
+            )
         
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.01)  # Reduced from 0.15s for 15x improvement on loop delay
         
         if max_iterations and iteration >= max_iterations:
             print(f"[Hybrid] Reached maximum iterations ({max_iterations})")
