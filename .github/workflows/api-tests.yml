@@ -86,6 +86,9 @@ jobs:
         working-directory: ./backend
         run: npm ci
 
+      - name: Ensure test-results directory exists
+        run: mkdir -p ./backend/test-results
+
       - name: Run comprehensive tests
         working-directory: ./backend
         env:
@@ -268,6 +271,9 @@ jobs:
       - name: Install dependencies
         working-directory: ./backend
         run: npm ci
+
+      - name: Ensure test-results directory exists
+        run: mkdir -p ./backend/test-results
 
       - name: Run performance benchmark
         working-directory: ./backend
