@@ -220,7 +220,7 @@ class DualAIMLEngine:
         hops = opp.get('hops', 0)
         
         # Create a simple hash key
-        path_str = '-'.join([p.get('id', str(i)) for i, p in enumerate(path)])
+        path_str = '-'.join([p.get('id', str(i)) if isinstance(p, dict) else str(i) for i, p in enumerate(path)])
         token_str = '-'.join(tokens)
         
         return f"{path_str}:{token_str}:{hops}"
