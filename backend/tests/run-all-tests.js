@@ -240,7 +240,12 @@ function displayComprehensiveResults(suiteResults, aggregatedResults) {
   console.log('='.repeat(80) + '\n');
   
   // Export comprehensive report
-  const reportPath = path.join(__dirname, '../test-results/comprehensive-report.json');
+  const resultsDir = path.join(__dirname, '../test-results');
+  if (!fs.existsSync(resultsDir)) {
+    fs.mkdirSync(resultsDir, { recursive: true });
+  }
+  
+  const reportPath = path.join(resultsDir, 'comprehensive-report.json');
   fs.writeFileSync(reportPath, JSON.stringify({
     suiteResults,
     aggregatedResults,
@@ -259,7 +264,12 @@ function displayComprehensiveResults(suiteResults, aggregatedResults) {
 
 // Create markdown report
 function createMarkdownReport(suiteResults, aggregatedResults, allPassed) {
-  const reportPath = path.join(__dirname, '../test-results/TEST-REPORT.md');
+  const resultsDir = path.join(__dirname, '../test-results');
+  if (!fs.existsSync(resultsDir)) {
+    fs.mkdirSync(resultsDir, { recursive: true });
+  }
+  
+  const reportPath = path.join(resultsDir, 'TEST-REPORT.md');
   
   let markdown = `# Comprehensive API Test Report\n\n`;
   markdown += `**Generated:** ${new Date().toISOString()}\n`;
