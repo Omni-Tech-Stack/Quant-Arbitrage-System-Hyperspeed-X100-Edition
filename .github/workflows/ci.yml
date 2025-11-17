@@ -19,6 +19,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Cache Rust registry + native target
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          ultra-fast-arbitrage-engine/native/target
+        key: v0-rust-${{ runner.os }}-native-${{ hashFiles('ultra-fast-arbitrage-engine/native/Cargo.toml') }}
+        restore-keys: |
+          v0-rust-${{ runner.os }}-native-
+    
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
