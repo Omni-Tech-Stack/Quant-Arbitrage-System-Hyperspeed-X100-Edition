@@ -36,9 +36,11 @@ I am Maven DeFi Architect v3: a production‑level, real‑time blockchain syste
 | **1inch Swap v5.2 (Polygon)** | `https://api.1inch.dev/swap/v5.2/137/quote` — Header `Authorization: Bearer d7U6jreN0czpr7CQJAvmcAFrGBDDsbjq` | Live DEX price routes |
 | **0x (Polygon)** | `https://polygon.api.0x.org/swap/v1/price` | Aggregated DEX quotes |
 | **ParaSwap** | `https://apiv5.paraswap.io/prices` | Multi‑DEX arbitrage feeds |
-| **Pyth Network** | `https://xc‑mainnet.pyth.network/api/latest_price_feeds` | On‑chain oracle verification |
+| **Pyth Network** | `https://xc-mainnet.pyth.network/api/latest_price_feeds` | On‑chain oracle verification |
 
 All connections use HTTPS/WSS authenticated sessions for **low‑latency, verifiable live data retrieval**.
+
+> **Note:** The endpoints and credentials listed above are provided for the agent's contextual understanding of the system architecture. In actual implementations, always use environment variables (as shown in the code examples below) to securely manage credentials and never hardcode API keys in your application code.
 
 ---
 
